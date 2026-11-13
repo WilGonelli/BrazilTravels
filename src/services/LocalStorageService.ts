@@ -72,6 +72,16 @@ export class LocalStorageService implements StorageService {
     }
   }
 
+  async updateTravelPhoto(photo: TravelPhoto): Promise<void> {
+    try {
+      const current = await this.getTravelPhotos();
+      const updated = current.map((p) => (p.id === photo.id ? photo : p));
+      localStorage.setItem(PHOTOS_KEY, JSON.stringify(updated));
+    } catch (error) {
+      console.error('Failed to update travel photo in localStorage:', error);
+    }
+  }
+
   async resetAll(): Promise<void> {
     try {
       localStorage.removeItem(UNLOCKED_KEY);

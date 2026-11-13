@@ -5,7 +5,12 @@ import { Destination } from '../../../models/Destination';
 interface PhotoUploadModalProps {
   readonly isOpen: boolean;
   readonly destination: Destination | null;
-  readonly onSave: (destinationId: string, photoDataUrls: string[], caption?: string) => void;
+  readonly onSave: (
+    destinationId: string,
+    photoDataUrls: string[],
+    caption?: string,
+    travelDate?: string
+  ) => void;
   readonly onClose: () => void;
 }
 
@@ -58,7 +63,7 @@ function resizeImage(file: File): Promise<string> {
 }
 
 /**
- * Accessible photo upload modal supporting single or multiple photo selection.
+ * Accessible photo upload modal supporting multiple photo selection, custom captions, and travel dates.
  */
 export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
   isOpen,
@@ -68,6 +73,7 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
 }) => {
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   const [caption, setCaption] = useState<string>('');
+  const [travelDate, setTravelDate] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -75,6 +81,7 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
     if (!isOpen) {
       setSelectedPhotos([]);
       setCaption('');
+      setTravelDate('');
       setIsProcessing(false);
     }
   }, [isOpen]);
@@ -104,7 +111,12 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
 
   const handleSave = () => {
     if (selectedPhotos.length === 0) return;
-    onSave(destination.id, selectedPhotos, caption.trim() || undefined);
+    onSave(
+      destination.id,
+      selectedPhotos,
+      caption.trim() || undefined,
+      travelDate.trim() || undefined
+    );
   };
 
   return (
@@ -118,7 +130,12 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
       >
         <header className={styles.modalHeader}>
           <span className={styles.headerTitle}>Adicionar Memórias de Viagem</span>
-          <button type="button" className={styles.closeButton} onClick={onClose} aria-label="Fechar janela">
+          <button
+            type="button"
+            className={styles.closeButton}
+            onClick={onClose}
+            aria-label="Fechar janela"
+          >
             ✕
           </button>
         </header>
@@ -150,7 +167,11 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
               <div className={styles.previewGrid}>
                 {selectedPhotos.map((photoUrl, idx) => (
                   <div key={idx} className={styles.previewThumbItem}>
-                    <img src={photoUrl} alt={`Prévia ${idx + 1}`} className={styles.thumbImage} />
+                    <img
+                      src={photoUrl}
+                      alt={`Prévia da foto ${idx + 1}`}
+                      className={styles.thumbImage}
+                    />
                     <button
                       type="button"
                       className={styles.removePhotoBtn}
@@ -187,13 +208,26 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
           )}
 
           <div className={styles.fieldGroup}>
+            <label htmlFor="travel-date-input" className={styles.label}>
+              Data da Viagem (opcional):
+            </label>
+            <input
+              id="travel-date-input"
+              type="date"
+              value={travelDate}
+              onChange={(e) => setTravelDate(e.target.value)}
+              className={styles.textInput}
+            />
+          </div>
+
+          <div className={styles.fieldGroup}>
             <label htmlFor="caption-input" className={styles.label}>
-              Legenda ou data da viagem (opcional):
+              Legenda ou Memória (opcional):
             </label>
             <input
               id="caption-input"
               type="text"
-              placeholder="Ex: Viagem de férias em Outubro/2026"
+              placeholder="Ex: Pôr do sol inesquecível na praia com a família"
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               className={styles.textInput}

@@ -38,6 +38,9 @@ class MockStorageService implements StorageService {
   async deleteTravelPhoto(photoId: string): Promise<void> {
     this.photos = this.photos.filter((p) => p.id !== photoId);
   }
+  async updateTravelPhoto(photo: TravelPhoto): Promise<void> {
+    this.photos = this.photos.map((p) => (p.id === photo.id ? photo : p));
+  }
   async resetAll(): Promise<void> {
     this.photos = [];
   }
@@ -163,5 +166,39 @@ describe('useSlideshowViewModel', () => {
       result.current.actions.handleCloseGallery();
     });
     expect(result.current.state.isGalleryOpen).toBe(false);
+  });
+
+  it('toggles favorites and navigates destination multi-photo carousel', async () => {
+    const { result } = renderHook(() => useSlideshowViewModel(mockStorage));
+    await act(async () => {});
+
+    // Toggle favorite
+    await act(async () => {
+      await result.current.actions.handleToggleFavorite('photo-1');
+    });
+    expect(result.current.state.photos.find((p) => p.id === 'photo-1')?.isFavorite).toBe(true);
+
+    // Add another photo for the same destination 'sancho-pe'
+    act(() => {
+      result.current.actions.handleAddPhoto({
+        id: 'photo-3',
+        destinationId: 'sancho-pe',
+        destinationName: 'Baía do Sancho',
+        stateCode: 'PE',
+        imageUrl: 'data:image/png;base64,sample3',
+        createdAt: '2026-10-03',
+      });
+    });
+
+    // Active photo is now photo-3 for sancho-pe
+    expect(result.current.state.activePhoto?.destinationId).toBe('sancho-pe');
+    expect(result.current.state.activeDestinationPhotos).toHaveLength(2);
+    expect(result.current.state.kenBurnsVariant).toBeDefined();
+
+    // Next destination photo switches to photo-1
+    act(() => {
+      result.current.actions.handleNextDestinationPhoto();
+    });
+    expect(result.current.state.activePhoto?.id).toBe('photo-1');
   });
 });

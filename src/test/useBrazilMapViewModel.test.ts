@@ -38,6 +38,10 @@ class MockStorageService implements StorageService {
     this.photos = this.photos.filter((p) => p.id !== photoId);
   }
 
+  async updateTravelPhoto(photo: TravelPhoto): Promise<void> {
+    this.photos = this.photos.map((p) => (p.id === photo.id ? photo : p));
+  }
+
   async resetAll(): Promise<void> {
     this.unlocked.clear();
     this.photos = [];
@@ -200,5 +204,39 @@ describe('useBrazilMapViewModel', () => {
     });
     expect(result.current.state.searchQuery).toBe('');
     expect(result.current.state.searchResults).toHaveLength(0);
+  });
+
+  it('manages route visibility, travel route points, and achievements modal', async () => {
+    const { result } = renderHook(() => useBrazilMapViewModel(mockStorage));
+    await act(async () => {});
+
+    // Route line visibility toggle
+    expect(result.current.state.isRouteLineVisible).toBe(true);
+    act(() => {
+      result.current.actions.handleToggleRouteLine();
+    });
+    expect(result.current.state.isRouteLineVisible).toBe(false);
+
+    // Achievements modal open/close
+    expect(result.current.state.isAchievementsModalOpen).toBe(false);
+    act(() => {
+      result.current.actions.handleOpenAchievements();
+    });
+    expect(result.current.state.isAchievementsModalOpen).toBe(true);
+    act(() => {
+      result.current.actions.handleCloseAchievements();
+    });
+    expect(result.current.state.isAchievementsModalOpen).toBe(false);
+
+    // Remote modal open/close
+    expect(result.current.state.isRemoteModalOpen).toBe(false);
+    act(() => {
+      result.current.actions.handleOpenRemoteModal();
+    });
+    expect(result.current.state.isRemoteModalOpen).toBe(true);
+    act(() => {
+      result.current.actions.handleCloseRemoteModal();
+    });
+    expect(result.current.state.isRemoteModalOpen).toBe(false);
   });
 });

@@ -51,9 +51,9 @@
 .mapHeader {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 16px;
   width: 100%;
 }
 
@@ -61,7 +61,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 0;
+  min-width: 260px;
   flex: 1;
 }
 
@@ -80,49 +80,19 @@
   line-height: 1.4;
 }
 
-.headerControls {
+.headerStatsGroup {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 10px;
-  min-width: 0;
-}
-
-.headerActions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.searchSection {
-  width: 100%;
-  max-width: 440px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.clearFilterBtn {
-  background-color: var(--bg-hover);
-  border: 1px solid #38bdf8;
-  color: var(--accent-cyan);
-  padding: 6px 14px;
-  border-radius: 8px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  transition: background-color 0.2s;
-  white-space: nowrap;
-}
-
-.clearFilterBtn:hover {
-  background-color: rgba(56, 189, 248, 0.15);
+  min-width: 280px;
+  max-width: 460px;
 }
 
 .progressBadge {
-  background-color: var(--bg-surface);
+  background-color: var(--bg-surface, #0f172a);
   border: 1px solid #334155;
-  color: var(--text-primary);
+  color: var(--text-primary, #f8fafc);
   font-size: 0.85rem;
   font-weight: 700;
   padding: 8px 16px;
@@ -131,6 +101,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .progressItem {
@@ -139,12 +110,115 @@
   gap: 4px;
 }
 
-.progressItem strong {
-  color: var(--accent-cyan);
+.progressDivider {
+  color: #475569;
 }
 
-.progressDivider {
-  color: var(--text-muted);
+.searchSection {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Dedicated Map Action Toolbar */
+.mapToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.toolbarActionsLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.toolbarActionsRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbarBtn {
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #f1f5f9;
+  padding: 7px 14px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.toolbarBtn:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.28);
+  transform: translateY(-1px);
+}
+
+.toolbarBtnActive {
+  background-color: rgba(56, 189, 248, 0.16);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+.toolbarBtnBadge {
+  background-color: rgba(245, 158, 11, 0.22);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 6px;
+  padding: 1px 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-left: 2px;
+}
+
+.toolbarBtnDotActive {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 6px #10b981;
+  display: inline-block;
+}
+
+.toolbarBtnDotInactive {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #64748b;
+  display: inline-block;
+}
+
+.clearFilterBtn {
+  background-color: rgba(56, 189, 248, 0.12);
+  border: 1px solid #38bdf8;
+  color: var(--accent-cyan, #38bdf8);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: background-color 0.2s, transform 0.15s;
+  white-space: nowrap;
+}
+
+.clearFilterBtn:hover {
+  background-color: rgba(56, 189, 248, 0.22);
+  transform: translateY(-1px);
 }
 
 .progressBarWrapper {

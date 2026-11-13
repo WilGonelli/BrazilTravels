@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { TravelPhoto } from '../models/TravelPhoto';
 import { StorageService } from '../services/StorageService';
 import { LocalStorageService } from '../services/LocalStorageService';
+
+export type KenBurnsVariant = 'zoom-in' | 'pan-left' | 'pan-right' | 'zoom-out';
 
 export interface SlideshowState {
   readonly photos: readonly TravelPhoto[];
@@ -10,13 +12,20 @@ export interface SlideshowState {
   readonly isPlaying: boolean;
   readonly intervalMs: number;
   readonly isGalleryOpen: boolean;
+  readonly kenBurnsVariant: KenBurnsVariant;
+  readonly activeDestinationPhotos: readonly TravelPhoto[];
+  readonly destinationPhotoIndex: number;
 }
 
 export interface SlideshowActions {
   readonly handleNext: () => void;
   readonly handlePrevious: () => void;
   readonly handleSelectIndex: (index: number) => void;
+  readonly handleNextDestinationPhoto: () => void;
+  readonly handlePreviousDestinationPhoto: () => void;
+  readonly handleJumpToDestinationPhoto: (index: number) => void;
   readonly handleTogglePlayPause: () => void;
+  readonly handleToggleFavorite: (photoId: string) => Promise<void>;
   readonly handleAddPhoto: (photo: TravelPhoto) => void;
   readonly handleAddPhotos: (photos: TravelPhoto[]) => void;
   readonly handleOpenGallery: () => void;
@@ -31,8 +40,15 @@ export interface SlideshowViewModelContract {
 
 const defaultStorage: StorageService = new LocalStorageService();
 
+const KEN_BURNS_VARIANTS: readonly KenBurnsVariant[] = [
+  'zoom-in',
+  'pan-left',
+  'pan-right',
+  'zoom-out',
+];
+
 /**
- * ViewModel managing the photo presentation slideshow.
+ * ViewModel managing the photo presentation slideshow, Ken Burns animations, and destination carousels.
  */
 export function useSlideshowViewModel(
   storage: StorageService = defaultStorage,
@@ -71,7 +87,10 @@ export function useSlideshowViewModel(
         const stored = await storage.getTravelPhotos();
         if (isMounted) {
           setPhotos((prev) => {
-            if (stored.length !== prev.length || (stored.length > 0 && stored[0]?.id !== prev[0]?.id)) {
+            if (
+              stored.length !== prev.length ||
+              (stored.length > 0 && stored[0]?.id !== prev[0]?.id)
+            ) {
               return stored;
             }
             return prev;
@@ -122,6 +141,71 @@ export function useSlideshowViewModel(
     setIsPlaying((prev) => !prev);
   }, []);
 
+  const activePhoto = photos[activeIndex] || null;
+
+  // Destination-specific carousel photos
+  const activeDestinationPhotos = useMemo(() => {
+    if (!activePhoto) return [];
+    return photos.filter((p) => p.destinationId === activePhoto.destinationId);
+  }, [photos, activePhoto]);
+
+  const destinationPhotoIndex = useMemo(() => {
+    if (!activePhoto || activeDestinationPhotos.length === 0) return 0;
+    const idx = activeDestinationPhotos.findIndex((p) => p.id === activePhoto.id);
+    return idx >= 0 ? idx : 0;
+  }, [activePhoto, activeDestinationPhotos]);
+
+  const handleNextDestinationPhoto = useCallback(() => {
+    if (activeDestinationPhotos.length <= 1) return;
+    const nextDestIdx = (destinationPhotoIndex + 1) % activeDestinationPhotos.length;
+    const targetPhoto = activeDestinationPhotos[nextDestIdx];
+    const globalIdx = photos.findIndex((p) => p.id === targetPhoto.id);
+    if (globalIdx >= 0) {
+      setActiveIndex(globalIdx);
+    }
+  }, [activeDestinationPhotos, destinationPhotoIndex, photos]);
+
+  const handlePreviousDestinationPhoto = useCallback(() => {
+    if (activeDestinationPhotos.length <= 1) return;
+    const prevDestIdx =
+      (destinationPhotoIndex - 1 + activeDestinationPhotos.length) %
+      activeDestinationPhotos.length;
+    const targetPhoto = activeDestinationPhotos[prevDestIdx];
+    const globalIdx = photos.findIndex((p) => p.id === targetPhoto.id);
+    if (globalIdx >= 0) {
+      setActiveIndex(globalIdx);
+    }
+  }, [activeDestinationPhotos, destinationPhotoIndex, photos]);
+
+  const handleJumpToDestinationPhoto = useCallback(
+    (index: number) => {
+      if (index >= 0 && index < activeDestinationPhotos.length) {
+        const targetPhoto = activeDestinationPhotos[index];
+        const globalIdx = photos.findIndex((p) => p.id === targetPhoto.id);
+        if (globalIdx >= 0) {
+          setActiveIndex(globalIdx);
+        }
+      }
+    },
+    [activeDestinationPhotos, photos]
+  );
+
+  const handleToggleFavorite = useCallback(
+    async (photoId: string) => {
+      const target = photos.find((p) => p.id === photoId);
+      if (!target) return;
+
+      const updatedPhoto: TravelPhoto = {
+        ...target,
+        isFavorite: !target.isFavorite,
+      };
+
+      setPhotos((prev) => prev.map((p) => (p.id === photoId ? updatedPhoto : p)));
+      await storage.updateTravelPhoto(updatedPhoto);
+    },
+    [photos, storage]
+  );
+
   const handleAddPhoto = useCallback((photo: TravelPhoto) => {
     setPhotos((prev) => [photo, ...prev]);
     setActiveIndex(0);
@@ -159,7 +243,40 @@ export function useSlideshowViewModel(
     [storage, onPhotoDeleted]
   );
 
-  const activePhoto = photos[activeIndex] || null;
+  // Listen to remote control commands broadcast from other browser tabs or mobile
+  useEffect(() => {
+    function handleRemoteEvent(e: Event) {
+      const customEvent = e as CustomEvent<{ action: string; payload?: unknown }>;
+      const action = customEvent.detail?.action;
+      if (action === 'NEXT') handleNext();
+      else if (action === 'PREV') handlePrevious();
+      else if (action === 'PLAY_PAUSE') handleTogglePlayPause();
+      else if (action === 'OPEN_GALLERY') handleOpenGallery();
+    }
+
+    function handleStorageRemote(e: StorageEvent) {
+      if (e.key === 'brazil_travels_remote_cmd' && e.newValue) {
+        try {
+          const cmd = JSON.parse(e.newValue);
+          if (cmd.action === 'NEXT') handleNext();
+          else if (cmd.action === 'PREV') handlePrevious();
+          else if (cmd.action === 'PLAY_PAUSE') handleTogglePlayPause();
+        } catch {
+          // Ignore invalid command
+        }
+      }
+    }
+
+    window.addEventListener('brazil_travels_remote', handleRemoteEvent);
+    window.addEventListener('storage', handleStorageRemote);
+    return () => {
+      window.removeEventListener('brazil_travels_remote', handleRemoteEvent);
+      window.removeEventListener('storage', handleStorageRemote);
+    };
+  }, [handleNext, handlePrevious, handleTogglePlayPause, handleOpenGallery]);
+
+  const kenBurnsVariant: KenBurnsVariant =
+    KEN_BURNS_VARIANTS[activeIndex % KEN_BURNS_VARIANTS.length] || 'zoom-in';
 
   return {
     state: {
@@ -169,12 +286,19 @@ export function useSlideshowViewModel(
       isPlaying,
       intervalMs,
       isGalleryOpen,
+      kenBurnsVariant,
+      activeDestinationPhotos,
+      destinationPhotoIndex,
     },
     actions: {
       handleNext,
       handlePrevious,
       handleSelectIndex,
+      handleNextDestinationPhoto,
+      handlePreviousDestinationPhoto,
+      handleJumpToDestinationPhoto,
       handleTogglePlayPause,
+      handleToggleFavorite,
       handleAddPhoto,
       handleAddPhotos,
       handleOpenGallery,

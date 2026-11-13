@@ -287,6 +287,45 @@ export class GoogleSheetsStorageService implements StorageService {
   }
 
   /**
+   * Updates an existing travel photo across local fallback, device API, and cloud storage.
+   */
+  async updateTravelPhoto(photo: TravelPhoto): Promise<void> {
+    // 1. Update local cache
+    await this.fallbackService.updateTravelPhoto(photo);
+
+    // 2. Update local device API (/api/photos)
+    if (typeof window !== 'undefined') {
+      try {
+        await fetch('/api/photos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(photo),
+        });
+      } catch (err) {
+        console.warn('Failed to update photo on local device API:', err);
+      }
+    }
+
+    // 3. Update Google Sheets if configured
+    if (this.scriptUrl) {
+      try {
+        await fetch(this.scriptUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8',
+          },
+          body: JSON.stringify({
+            action: 'updatePhoto',
+            photo,
+          }),
+        });
+      } catch (error) {
+        console.error('Failed to sync updated travel photo to Google Sheets:', error);
+      }
+    }
+  }
+
+  /**
    * Clears all local storage records.
    */
   async resetAll(): Promise<void> {

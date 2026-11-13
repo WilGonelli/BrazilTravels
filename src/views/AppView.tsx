@@ -10,6 +10,8 @@ import { StateFlagsBar } from './components/map/StateFlagsBar';
 import { DestinationSearchBar } from './components/search/DestinationSearchBar';
 import { SimpleUnlockModal } from './components/modal/SimpleUnlockModal';
 import { PhotoUploadModal } from './components/modal/PhotoUploadModal';
+import { AchievementsModal } from './components/modal/AchievementsModal';
+import { RemoteControlModal } from './components/modal/RemoteControlModal';
 
 /**
  * Main application view following the strict MVVM architecture.
@@ -28,6 +30,7 @@ export const AppView: React.FC = () => {
 
   const { state, actions } = mapViewModel;
   const {
+    destinations,
     selectedStateCode,
     unlockedStatesCount,
     totalStatesCount,
@@ -39,7 +42,24 @@ export const AppView: React.FC = () => {
     pendingDestination,
     isPhotoModalOpen,
     targetPhotoDestination,
+    isRouteLineVisible,
+    achievements,
+    unlockedAchievementsCount,
+    totalAchievementsCount,
+    isAchievementsModalOpen,
+    isRemoteModalOpen,
   } = state;
+
+  const handlePickRandomDestination = () => {
+    const lockedPoints = Object.values(destinations).filter(
+      (d) => !d.isUnlocked && d.category !== 'State'
+    );
+    if (lockedPoints.length > 0) {
+      const randomChoice = lockedPoints[Math.floor(Math.random() * lockedPoints.length)];
+      actions.handleSelectState(randomChoice.stateCode);
+      actions.handleRequestUnlock(randomChoice);
+    }
+  };
 
   return (
     <main className={styles.appLayout}>
@@ -61,29 +81,19 @@ export const AppView: React.FC = () => {
                 </p>
               </div>
 
-              <div className={styles.headerControls}>
-                <div className={styles.headerActions}>
-                  {selectedStateCode && (
-                    <button
-                      type="button"
-                      className={styles.clearFilterBtn}
-                      onClick={() => actions.handleSelectState(null)}
-                    >
-                      ✕ Limpar Filtro ({selectedStateCode})
-                    </button>
-                  )}
-
-                  <div className={styles.progressBadge} aria-live="polite">
-                    <span className={styles.progressItem}>
-                      <strong>{unlockedStatesCount}</strong>/{totalStatesCount} Estados ({progressPercentage}%)
-                    </span>
-                    <span className={styles.progressDivider} aria-hidden="true">
-                      •
-                    </span>
-                    <span className={styles.progressItem}>
-                      <strong>{unlockedPointsCount}</strong>/{totalPointsCount} Destinos ({pointsProgressPercentage.toFixed(2)}% visitados)
-                    </span>
-                  </div>
+              <div className={styles.headerStatsGroup}>
+                <div className={styles.progressBadge} aria-live="polite">
+                  <span className={styles.progressItem}>
+                    <strong>{unlockedStatesCount}</strong>/{totalStatesCount} Estados (
+                    {progressPercentage}%)
+                  </span>
+                  <span className={styles.progressDivider} aria-hidden="true">
+                    •
+                  </span>
+                  <span className={styles.progressItem}>
+                    <strong>{unlockedPointsCount}</strong>/{totalPointsCount} Destinos (
+                    {pointsProgressPercentage.toFixed(2)}% visitados)
+                  </span>
                 </div>
 
                 <div className={styles.searchSection}>
@@ -91,6 +101,78 @@ export const AppView: React.FC = () => {
                 </div>
               </div>
             </header>
+
+            {/* Dedicated Action Toolbar */}
+            <div className={styles.mapToolbar} role="toolbar" aria-label="Ferramentas e Ações do Mapa">
+              <div className={styles.toolbarActionsLeft}>
+                <button
+                  type="button"
+                  className={styles.toolbarBtn}
+                  onClick={actions.handleOpenAchievements}
+                  aria-label={`Ver conquistas e medalhas (${unlockedAchievementsCount} de ${totalAchievementsCount})`}
+                  title="Conquistas de Viagem"
+                >
+                  🏅 Conquistas
+                  <span className={styles.toolbarBtnBadge}>
+                    {unlockedAchievementsCount}/{totalAchievementsCount}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`${styles.toolbarBtn} ${isRouteLineVisible ? styles.toolbarBtnActive : ''}`}
+                  onClick={actions.handleToggleRouteLine}
+                  aria-label={
+                    isRouteLineVisible
+                      ? 'Ocultar rotas de voo no mapa'
+                      : 'Exibir rotas de voo no mapa'
+                  }
+                  title="Alternar rotas de viagem no mapa"
+                >
+                  <span
+                    className={
+                      isRouteLineVisible
+                        ? styles.toolbarBtnDotActive
+                        : styles.toolbarBtnDotInactive
+                    }
+                    aria-hidden="true"
+                  />
+                  ✈️ Rotas
+                </button>
+
+                <button
+                  type="button"
+                  className={styles.toolbarBtn}
+                  onClick={actions.handleOpenRemoteModal}
+                  aria-label="Abrir controle remoto e acesso celular"
+                  title="Controle Remoto / Acesso Celular"
+                >
+                  📱 Celular
+                </button>
+
+                <button
+                  type="button"
+                  className={styles.toolbarBtn}
+                  onClick={handlePickRandomDestination}
+                  aria-label="Sortear próximo destino para viajar"
+                  title="Sortear próximo destino"
+                >
+                  🎲 Sortear
+                </button>
+              </div>
+
+              {selectedStateCode && (
+                <div className={styles.toolbarActionsRight}>
+                  <button
+                    type="button"
+                    className={styles.clearFilterBtn}
+                    onClick={() => actions.handleSelectState(null)}
+                  >
+                    ✕ Limpar Filtro ({selectedStateCode})
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Visual Gradient Progress Bar */}
             <div
@@ -111,9 +193,21 @@ export const AppView: React.FC = () => {
             <div className={styles.posterGrid}>
               {/* Left Column: Cidades, Pontos Turísticos, Cachoeiras, Ilhas */}
               <aside className={styles.leftColumn} aria-label="Categorias de Destinos">
-                <CategorySidebar title="Cidades Famosas" category="FamousCity" viewModel={mapViewModel} />
-                <CategorySidebar title="Pontos Turísticos" category="TouristSpot" viewModel={mapViewModel} />
-                <CategorySidebar title="Cachoeiras" category="Waterfall" viewModel={mapViewModel} />
+                <CategorySidebar
+                  title="Cidades Famosas"
+                  category="FamousCity"
+                  viewModel={mapViewModel}
+                />
+                <CategorySidebar
+                  title="Pontos Turísticos"
+                  category="TouristSpot"
+                  viewModel={mapViewModel}
+                />
+                <CategorySidebar
+                  title="Cachoeiras"
+                  category="Waterfall"
+                  viewModel={mapViewModel}
+                />
                 <CategorySidebar title="Ilhas" category="Island" viewModel={mapViewModel} />
               </aside>
 
@@ -124,12 +218,17 @@ export const AppView: React.FC = () => {
 
               {/* Right Column: Principais Praias */}
               <aside className={styles.rightColumn} aria-label="Principais Praias">
-                <CategorySidebar title="Principais Praias" category="Beach" viewModel={mapViewModel} />
+                <CategorySidebar
+                  title="Principais Praias"
+                  category="Beach"
+                  viewModel={mapViewModel}
+                />
               </aside>
             </div>
 
             <footer className={styles.footerNote}>
-              Otimizado para exibição em Totem Vertical (1080×1920) e Monitores Desktop • MVVM Architecture
+              Otimizado para exibição em Totem Vertical (1080×1920) e Monitores Desktop • MVVM
+              Architecture
             </footer>
           </section>
         </div>
@@ -155,6 +254,28 @@ export const AppView: React.FC = () => {
         destination={targetPhotoDestination}
         onSave={actions.handleSavePhotos}
         onClose={actions.handleClosePhotoUpload}
+      />
+
+      {/* Traveler Badges & Achievements Modal */}
+      <AchievementsModal
+        isOpen={isAchievementsModalOpen}
+        achievements={achievements}
+        unlockedCount={unlockedAchievementsCount}
+        totalCount={totalAchievementsCount}
+        onClose={actions.handleCloseAchievements}
+      />
+
+      {/* Remote Control & Mobile Access Modal */}
+      <RemoteControlModal
+        isOpen={isRemoteModalOpen}
+        onClose={actions.handleCloseRemoteModal}
+        onNextPhoto={slideshowViewModel.actions.handleNext}
+        onPrevPhoto={slideshowViewModel.actions.handlePrevious}
+        onTogglePlayPause={slideshowViewModel.actions.handleTogglePlayPause}
+        isPlaying={slideshowViewModel.state.isPlaying}
+        onToggleRouteLine={actions.handleToggleRouteLine}
+        isRouteLineVisible={isRouteLineVisible}
+        onPickRandomDestination={handlePickRandomDestination}
       />
     </main>
   );

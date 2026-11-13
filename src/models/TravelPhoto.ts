@@ -9,6 +9,7 @@ export interface TravelPhoto {
   readonly imageUrl: string;
   readonly caption?: string;
   readonly travelDate?: string;
+  readonly isFavorite?: boolean;
   readonly createdAt: string;
 }
 

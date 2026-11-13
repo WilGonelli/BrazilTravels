@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import styles from './BrazilMapSvg.module.css';
 import { BRAZIL_GEO_PATHS } from '../../../models/brazilGeoPaths';
-import { BrazilMapViewModelContract } from '../../../viewmodels/useBrazilMapViewModel';
+import { BrazilMapViewModelContract, RoutePoint } from '../../../viewmodels/useBrazilMapViewModel';
 import { BrazilStateCode } from '../../../models/Destination';
 
 interface BrazilMapSvgProps {
@@ -9,11 +9,38 @@ interface BrazilMapSvgProps {
 }
 
 /**
- * Accessible vector map rendering authentic IBGE geographic boundaries.
+ * Builds smooth curved SVG flight path between travel route points.
+ */
+function buildRouteSvgPath(points: readonly RoutePoint[]): string {
+  if (points.length < 2) return '';
+  let d = `M ${points[0].x},${points[0].y}`;
+  for (let i = 1; i < points.length; i++) {
+    const prev = points[i - 1];
+    const curr = points[i];
+    const dx = curr.x - prev.x;
+    const dy = curr.y - prev.y;
+    const dist = Math.hypot(dx, dy);
+
+    // Arch bezier control point perpendicular to line
+    const midX = (prev.x + curr.x) / 2;
+    const midY = (prev.y + curr.y) / 2 - Math.min(32, dist * 0.16);
+
+    d += ` Q ${midX},${midY} ${curr.x},${curr.y}`;
+  }
+  return d;
+}
+
+/**
+ * Accessible vector map rendering authentic IBGE geographic boundaries and animated travel route lines.
  */
 export const BrazilMapSvg: React.FC<BrazilMapSvgProps> = ({ viewModel }) => {
   const { state, actions } = viewModel;
-  const { destinations, selectedStateCode } = state;
+  const { destinations, selectedStateCode, isRouteLineVisible, travelRoutePoints } = state;
+
+  const routePathD = useMemo(() => {
+    if (!isRouteLineVisible || travelRoutePoints.length < 2) return '';
+    return buildRouteSvgPath(travelRoutePoints);
+  }, [isRouteLineVisible, travelRoutePoints]);
 
   return (
     <div className={styles.mapSvgWrapper}>
@@ -61,7 +88,9 @@ export const BrazilMapSvg: React.FC<BrazilMapSvgProps> = ({ viewModel }) => {
               className={`${styles.statePath} ${isSelected ? styles.stateSelected : ''}`}
               role="button"
               tabIndex={0}
-              aria-label={`${geo.name} (${geo.code}), ${geo.region} - ${isUnlocked ? 'Desbloqueado' : 'Bloqueado (Raspadinha)'}`}
+              aria-label={`${geo.name} (${geo.code}), ${geo.region} - ${
+                isUnlocked ? 'Desbloqueado' : 'Bloqueado (Raspadinha)'
+              }`}
               aria-pressed={isSelected}
               onClick={() => actions.handleSelectState(geo.code as BrazilStateCode)}
               onKeyDown={handleKey}
@@ -95,6 +124,25 @@ export const BrazilMapSvg: React.FC<BrazilMapSvgProps> = ({ viewModel }) => {
             </text>
           );
         })}
+
+        {/* Flight and Travel Route Connections */}
+        {routePathD && (
+          <g aria-label="Linhas da Rota de Viagem">
+            <path d={routePathD} className={styles.flightRouteBg} />
+            <path d={routePathD} className={styles.flightRoute} />
+            {travelRoutePoints.map((pt) => (
+              <circle
+                key={`stop-${pt.id}`}
+                cx={pt.x}
+                cy={pt.y}
+                r={3.8}
+                className={styles.routeStopCircle}
+              >
+                <title>{pt.name}</title>
+              </circle>
+            ))}
+          </g>
+        )}
       </svg>
     </div>
   );

@@ -33,6 +33,10 @@ class MockLocalFallback implements StorageService {
     this.photos = this.photos.filter((p) => p.id !== photoId);
   }
 
+  async updateTravelPhoto(photo: TravelPhoto): Promise<void> {
+    this.photos = this.photos.map((p) => (p.id === photo.id ? photo : p));
+  }
+
   async resetAll(): Promise<void> {
     this.unlocked.clear();
     this.photos = [];

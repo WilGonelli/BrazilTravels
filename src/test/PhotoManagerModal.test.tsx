@@ -129,4 +129,31 @@ describe('PhotoManagerModal component', () => {
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('filters photos by search query and toggles favorite', async () => {
+    const user = userEvent.setup();
+    const onToggleFavorite = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <PhotoManagerModal
+        isOpen={true}
+        photos={mockPhotos}
+        onClose={vi.fn()}
+        onDeletePhoto={vi.fn()}
+        onToggleFavorite={onToggleFavorite}
+      />
+    );
+
+    // Toggle favorite
+    const favBtn = screen.getByRole('button', { name: /marcar foto de praia do félix como favorita/i });
+    await user.click(favBtn);
+    expect(onToggleFavorite).toHaveBeenCalledWith('photo-1');
+
+    // Filter by destination name
+    const searchInput = screen.getByRole('textbox', { name: /filtrar fotos cadastradas/i });
+    await user.type(searchInput, 'Sancho');
+
+    expect(screen.queryByText(/praia do félix/i)).toBeNull();
+    expect(screen.getByText(/baía do sancho/i)).toBeInTheDocument();
+  });
 });

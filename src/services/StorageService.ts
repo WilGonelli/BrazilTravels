@@ -36,6 +36,11 @@ export interface StorageService {
   deleteTravelPhoto(photoId: string): Promise<void>;
 
   /**
+   * Updates an existing travel photo (e.g., toggles favorite or edits caption).
+   */
+  updateTravelPhoto(photo: TravelPhoto): Promise<void>;
+
+  /**
    * Resets all progress.
    */
   resetAll(): Promise<void>;

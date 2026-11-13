@@ -125,18 +125,194 @@
   height: 100%;
   object-fit: cover;
   object-position: center;
-  animation: fadeIn 0.5s ease-in-out;
+  will-change: transform, opacity;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0.25;
-    transform: scale(1.015);
-  }
-  to {
-    opacity: 1;
+/* Ken Burns dynamic cinema pan and zoom variants */
+.kenBurnsZoomIn {
+  animation: kbZoomIn 10s ease-out forwards;
+}
+
+.kenBurnsPanLeft {
+  animation: kbPanLeft 10s ease-out forwards;
+}
+
+.kenBurnsPanRight {
+  animation: kbPanRight 10s ease-out forwards;
+}
+
+.kenBurnsZoomOut {
+  animation: kbZoomOut 10s ease-out forwards;
+}
+
+@keyframes kbZoomIn {
+  0% {
+    opacity: 0.2;
     transform: scale(1);
   }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+}
+
+@keyframes kbPanLeft {
+  0% {
+    opacity: 0.2;
+    transform: scale(1.08) translate(0%, 0%);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.14) translate(-2.5%, -1.5%);
+  }
+}
+
+@keyframes kbPanRight {
+  0% {
+    opacity: 0.2;
+    transform: scale(1.08) translate(0%, 0%);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.14) translate(2.5%, 1.5%);
+  }
+}
+
+@keyframes kbZoomOut {
+  0% {
+    opacity: 0.2;
+    transform: scale(1.14);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroImage,
+  .kenBurnsZoomIn,
+  .kenBurnsPanLeft,
+  .kenBurnsPanRight,
+  .kenBurnsZoomOut {
+    animation: fadeInStatic 0.5s ease-in-out forwards;
+    transform: none !important;
+  }
+  @keyframes fadeInStatic {
+    from { opacity: 0.3; }
+    to { opacity: 1; }
+  }
+}
+
+/* Carousel Overlay for multiple destination photos */
+.carouselOverlay {
+  position: absolute;
+  bottom: 12px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(15, 23, 42, 0.78);
+  backdrop-filter: blur(8px);
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  z-index: 3;
+}
+
+.carouselNavBtn {
+  background: none;
+  border: none;
+  color: #f8fafc;
+  font-size: 1.1rem;
+  font-weight: 800;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.15s;
+}
+
+.carouselNavBtn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.carouselCounter {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-cyan, #38bdf8);
+  white-space: nowrap;
+}
+
+.carouselDots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.carouselDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.35);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.carouselDotActive {
+  background-color: var(--accent-cyan, #38bdf8);
+  transform: scale(1.4);
+}
+
+.destTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.favoriteStarBtn {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: transform 0.15s;
+}
+
+.favoriteStarBtn:hover {
+  transform: scale(1.2);
+}
+
+.datePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: rgba(255, 255, 255, 0.08);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  margin-top: 4px;
 }
 
 .heroBadge {
