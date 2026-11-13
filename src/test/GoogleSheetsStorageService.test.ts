@@ -15,6 +15,12 @@ class MockLocalFallback implements StorageService {
     this.unlocked.add(id);
   }
 
+  async saveUnlockedDestinationIds(ids: string[]): Promise<void> {
+    for (const id of ids) {
+      this.unlocked.add(id);
+    }
+  }
+
   async getTravelPhotos(): Promise<TravelPhoto[]> {
     return [...this.photos];
   }
@@ -90,5 +96,25 @@ describe('GoogleSheetsStorageService', () => {
         body: expect.stringContaining('"destinationId":"ba-salvador"'),
       })
     );
+  });
+
+  it('merges local and remote unlocked IDs without wiping local progress', async () => {
+    // Existing locally (e.g. Praia do Félix was unlocked locally before reload)
+    fallback.unlocked.add('sp-ubatuba-felix');
+
+    // Remote has state-SP
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => ['state-SP'],
+    } as Response);
+
+    const service = new GoogleSheetsStorageService(mockScriptUrl, fallback);
+    const result = await service.getUnlockedDestinationIds();
+
+    // Both should be preserved!
+    expect(result.has('sp-ubatuba-felix')).toBe(true);
+    expect(result.has('state-SP')).toBe(true);
+    expect(fallback.unlocked.has('sp-ubatuba-felix')).toBe(true);
+    expect(fallback.unlocked.has('state-SP')).toBe(true);
   });
 });

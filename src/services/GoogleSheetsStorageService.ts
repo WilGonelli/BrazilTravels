@@ -24,11 +24,13 @@ export class GoogleSheetsStorageService implements StorageService {
 
   /**
    * Retrieves unlocked destination IDs from Google Sheets.
-   * Falls back to local storage if network is offline or unconfigured.
+   * Merges remote data with local cache without destructive wipes.
    */
   async getUnlockedDestinationIds(): Promise<Set<string>> {
+    const localIds = await this.fallbackService.getUnlockedDestinationIds();
+
     if (!this.scriptUrl) {
-      return this.fallbackService.getUnlockedDestinationIds();
+      return localIds;
     }
 
     try {
@@ -43,19 +45,27 @@ export class GoogleSheetsStorageService implements StorageService {
 
       const data = await response.json();
       if (Array.isArray(data)) {
-        const ids = new Set<string>(data);
-        // Synchronize authoritative remote data to local fallback cache
-        await this.fallbackService.resetAll();
-        for (const id of ids) {
-          await this.fallbackService.saveUnlockedDestinationId(id);
+        // Union merge: never discard local progress if remote is lagging
+        const merged = new Set<string>([...localIds, ...data]);
+
+        // Keep local fallback synchronized with the merged truth
+        await this.fallbackService.saveUnlockedDestinationIds(Array.from(merged));
+
+        // Sync local IDs that are missing from remote
+        const missingOnRemote = Array.from(localIds).filter((id) => !data.includes(id));
+        if (missingOnRemote.length > 0) {
+          this.saveUnlockedDestinationIds(missingOnRemote).catch((err) =>
+            console.warn('Background sync to Google Sheets failed:', err)
+          );
         }
-        return ids;
+
+        return merged;
       }
 
-      return this.fallbackService.getUnlockedDestinationIds();
+      return localIds;
     } catch (error) {
       console.warn('Google Sheets offline or unreachable; falling back to local storage:', error);
-      return this.fallbackService.getUnlockedDestinationIds();
+      return localIds;
     }
   }
 
@@ -63,26 +73,40 @@ export class GoogleSheetsStorageService implements StorageService {
    * Persists an unlocked destination ID to Google Sheets and local storage cache.
    */
   async saveUnlockedDestinationId(id: string): Promise<void> {
-    // 1. Optimistic local cache update
-    await this.fallbackService.saveUnlockedDestinationId(id);
+    await this.saveUnlockedDestinationIds([id]);
+  }
+
+  /**
+   * Persists multiple unlocked destination IDs atomically to local storage and remote Google Sheets.
+   */
+  async saveUnlockedDestinationIds(ids: string[]): Promise<void> {
+    const validIds = Array.from(new Set(ids.filter(Boolean)));
+    if (validIds.length === 0) return;
+
+    // 1. Immediate optimistic local cache update
+    await this.fallbackService.saveUnlockedDestinationIds(validIds);
 
     if (!this.scriptUrl) return;
 
-    // 2. Asynchronous remote update to Google Sheets
+    // 2. Asynchronous remote updates to Google Sheets in parallel
     try {
-      await fetch(this.scriptUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8',
-        },
-        body: JSON.stringify({
-          action: 'unlock',
-          destinationId: id,
-          timestamp: new Date().toISOString(),
-        }),
-      });
+      await Promise.allSettled(
+        validIds.map((id) =>
+          fetch(this.scriptUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'text/plain;charset=utf-8',
+            },
+            body: JSON.stringify({
+              action: 'unlock',
+              destinationId: id,
+              timestamp: new Date().toISOString(),
+            }),
+          })
+        )
+      );
     } catch (error) {
-      console.error('Failed to sync unlock event to Google Sheets:', error);
+      console.error('Failed to sync unlock events to Google Sheets:', error);
     }
   }
 

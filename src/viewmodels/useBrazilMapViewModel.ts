@@ -135,9 +135,9 @@ export function useBrazilMapViewModel(
 
     setPendingDestination(null);
 
-    // Save to persistent storage
-    await storage.saveUnlockedDestinationId(destId);
-    await storage.saveUnlockedDestinationId(parentStateId);
+    // Save to persistent storage atomically
+    const idsToSave = Array.from(new Set([destId, parentStateId]));
+    await storage.saveUnlockedDestinationIds(idsToSave);
   }, [pendingDestination, storage]);
 
   const handleOpenPhotoUpload = useCallback((destination: Destination) => {

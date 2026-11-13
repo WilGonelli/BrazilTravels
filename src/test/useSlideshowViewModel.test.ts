@@ -28,6 +28,7 @@ class MockStorageService implements StorageService {
     return new Set();
   }
   async saveUnlockedDestinationId(): Promise<void> {}
+  async saveUnlockedDestinationIds(): Promise<void> {}
   async getTravelPhotos(): Promise<TravelPhoto[]> {
     return [...this.photos];
   }

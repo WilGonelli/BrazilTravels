@@ -16,6 +16,11 @@ export interface StorageService {
   saveUnlockedDestinationId(id: string): Promise<void>;
 
   /**
+   * Saves multiple unlocked destination IDs atomically.
+   */
+  saveUnlockedDestinationIds(ids: string[]): Promise<void>;
+
+  /**
    * Retrieves all registered travel photos.
    */
   getTravelPhotos(): Promise<TravelPhoto[]>;

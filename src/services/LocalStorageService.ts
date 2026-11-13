@@ -25,12 +25,18 @@ export class LocalStorageService implements StorageService {
   }
 
   async saveUnlockedDestinationId(id: string): Promise<void> {
+    await this.saveUnlockedDestinationIds([id]);
+  }
+
+  async saveUnlockedDestinationIds(ids: string[]): Promise<void> {
     try {
       const current = await this.getUnlockedDestinationIds();
-      current.add(id);
+      for (const id of ids) {
+        if (id) current.add(id);
+      }
       localStorage.setItem(UNLOCKED_KEY, JSON.stringify(Array.from(current)));
     } catch (error) {
-      console.error('Failed to save unlocked ID to localStorage:', error);
+      console.error('Failed to save unlocked IDs to localStorage:', error);
     }
   }
 
