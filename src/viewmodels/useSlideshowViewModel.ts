@@ -69,9 +69,9 @@ export function useSlideshowViewModel(
     const interval = setInterval(async () => {
       try {
         const stored = await storage.getTravelPhotos();
-        if (isMounted && stored.length > 0) {
+        if (isMounted) {
           setPhotos((prev) => {
-            if (stored.length !== prev.length || stored[0]?.id !== prev[0]?.id) {
+            if (stored.length !== prev.length || (stored.length > 0 && stored[0]?.id !== prev[0]?.id)) {
               return stored;
             }
             return prev;

@@ -164,7 +164,12 @@ export class GoogleSheetsStorageService implements StorageService {
           const apiPhotos = await localApiRes.json();
           if (Array.isArray(apiPhotos)) {
             const valid = apiPhotos.filter(isValidTravelPhoto);
-            if (valid.length > 0) {
+            if (valid.length > 0 || apiPhotos.length === 0) {
+              try {
+                localStorage.setItem('brazil_travels_photos', JSON.stringify(valid));
+              } catch {
+                // Ignore storage quota
+              }
               return valid;
             }
           }
@@ -249,11 +254,14 @@ export class GoogleSheetsStorageService implements StorageService {
     // 2. Delete from local device API (/api/photos/delete)
     if (typeof window !== 'undefined') {
       try {
-        await fetch('/api/photos/delete', {
+        const res = await fetch('/api/photos/delete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: photoId }),
         });
+        if (!res.ok) {
+          await fetch(`/api/photos/${photoId}`, { method: 'DELETE' });
+        }
       } catch (err) {
         console.warn('Failed to delete photo from local device API:', err);
       }

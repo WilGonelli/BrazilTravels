@@ -33,11 +33,13 @@ conn.on('ready', () => {
         
         const cmd = [
           'echo admin | sudo -S tar -xzf /tmp/dist_update.tar.gz -C /var/www/brazil-travels',
+          'echo admin | sudo -S cp /tmp/api_server.py /home/pi/api_server.py',
           'echo admin | sudo -S cp /tmp/api_server.py /var/www/brazil-travels/api_server.py',
-          'echo admin | sudo -S chmod +x /var/www/brazil-travels/api_server.py',
+          'echo admin | sudo -S chmod +x /home/pi/api_server.py /var/www/brazil-travels/api_server.py',
+          'echo admin | sudo -S chown pi:pi /home/pi/api_server.py',
           'echo admin | sudo -S mkdir -p /var/www/brazil-travels/uploads /var/www/brazil-travels/data',
           'echo admin | sudo -S chown -R www-data:www-data /var/www/brazil-travels',
-          'echo admin | sudo -S chmod -R 775 /var/www/brazil-travels/uploads /var/www/brazil-travels/data',
+          'echo admin | sudo -S chmod -R 777 /var/www/brazil-travels/uploads /var/www/brazil-travels/data',
           'echo admin | sudo -S systemctl restart brazil-travels-api.service',
           'export DISPLAY=:0 && /home/pi/reload.sh'
         ].join(' && ');

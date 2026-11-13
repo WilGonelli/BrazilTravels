@@ -69,6 +69,36 @@ class ApiHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
 
+    def do_DELETE(self):
+        clean_path = self.path.split("?")[0].rstrip("/")
+        if clean_path.startswith("/photos/") or clean_path.startswith("/api/photos/"):
+            photo_id = clean_path.split("/")[-1]
+            try:
+                with open(PHOTOS_FILE, "r", encoding="utf-8") as f:
+                    photos = json.load(f)
+
+                # Delete corresponding file in UPLOADS_DIR if exists
+                deleted = [p for p in photos if p.get("id") == photo_id]
+                for p in deleted:
+                    img_url = p.get("imageUrl", "")
+                    if img_url.startswith("/uploads/"):
+                        fname = os.path.basename(img_url)
+                        fpath = os.path.join(UPLOADS_DIR, fname)
+                        if os.path.exists(fpath):
+                            try:
+                                os.remove(fpath)
+                            except Exception:
+                                pass
+
+                photos = [p for p in photos if p.get("id") != photo_id]
+                with open(PHOTOS_FILE, "w", encoding="utf-8") as f:
+                    json.dump(photos, f, ensure_ascii=False, indent=2)
+                self._send_json(200, {"status": "ok", "photosCount": len(photos)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
+            return
+        self._send_json(404, {"error": "Not Found"})
+
     def do_GET(self):
         clean_path = self.path.split("?")[0].rstrip("/")
         
