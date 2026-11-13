@@ -111,7 +111,7 @@ export function useBrazilMapViewModel(
 
     const unlockedPoints = points.filter((d) => d.isUnlocked).length;
     const totalPoints = points.length;
-    const pointsPercentage = totalPoints > 0 ? Math.round((unlockedPoints / totalPoints) * 100) : 0;
+    const pointsPercentage = totalPoints > 0 ? Number(((unlockedPoints / totalPoints) * 100).toFixed(2)) : 0;
 
     return {
       unlockedStatesCount: unlockedStates,

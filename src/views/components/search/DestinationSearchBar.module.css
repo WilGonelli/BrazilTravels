@@ -1,14 +1,14 @@
 .searchContainer {
   position: relative;
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
   box-sizing: border-box;
 }
 
 .inputWrapper {
   display: flex;
   align-items: center;
-  background-color: var(--bg-surface, #1e293b);
+  background-color: var(--bg-surface, #18202f);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 12px;
   padding: 6px 12px;
@@ -31,13 +31,40 @@
 
 .searchInput {
   flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--text-primary, #f8fafc);
+  background-color: transparent !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: var(--text-primary, #f8fafc) !important;
   font-size: 0.85rem;
   font-weight: 500;
   min-width: 0;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  box-shadow: none !important;
+}
+
+.searchInput::-webkit-search-decoration,
+.searchInput::-webkit-search-cancel-button,
+.searchInput::-webkit-search-results-button,
+.searchInput::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  display: none;
+}
+
+.searchInput:-webkit-autofill,
+.searchInput:-webkit-autofill:hover,
+.searchInput:-webkit-autofill:focus,
+.searchInput:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #18202f inset !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.searchInput::selection {
+  background-color: rgba(56, 189, 248, 0.35);
+  color: #ffffff;
 }
 
 .searchInput::placeholder {

@@ -89,7 +89,8 @@ export const DestinationSearchBar: React.FC<DestinationSearchBarProps> = ({ view
         </span>
         <input
           ref={inputRef}
-          type="search"
+          type="text"
+          inputMode="search"
           role="combobox"
           aria-autocomplete="list"
           aria-expanded={isOpen}
@@ -107,6 +108,10 @@ export const DestinationSearchBar: React.FC<DestinationSearchBarProps> = ({ view
             if (searchResults.length > 0) setIsOpen(true);
           }}
           onKeyDown={handleKeyDown}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="none"
+          spellCheck="false"
           aria-label="Buscar destinos turísticos do Brasil"
         />
         {searchQuery.length > 0 && (

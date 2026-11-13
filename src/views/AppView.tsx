@@ -61,31 +61,33 @@ export const AppView: React.FC = () => {
                 </p>
               </div>
 
-              <div className={styles.searchSection}>
-                <DestinationSearchBar viewModel={mapViewModel} />
-              </div>
+              <div className={styles.headerControls}>
+                <div className={styles.headerActions}>
+                  {selectedStateCode && (
+                    <button
+                      type="button"
+                      className={styles.clearFilterBtn}
+                      onClick={() => actions.handleSelectState(null)}
+                    >
+                      ✕ Limpar Filtro ({selectedStateCode})
+                    </button>
+                  )}
 
-              <div className={styles.headerActions}>
-                {selectedStateCode && (
-                  <button
-                    type="button"
-                    className={styles.clearFilterBtn}
-                    onClick={() => actions.handleSelectState(null)}
-                  >
-                    ✕ Limpar Filtro ({selectedStateCode})
-                  </button>
-                )}
+                  <div className={styles.progressBadge} aria-live="polite">
+                    <span className={styles.progressItem}>
+                      <strong>{unlockedStatesCount}</strong>/{totalStatesCount} Estados ({progressPercentage}%)
+                    </span>
+                    <span className={styles.progressDivider} aria-hidden="true">
+                      •
+                    </span>
+                    <span className={styles.progressItem}>
+                      <strong>{unlockedPointsCount}</strong>/{totalPointsCount} Destinos ({pointsProgressPercentage.toFixed(2)}% visitados)
+                    </span>
+                  </div>
+                </div>
 
-                <div className={styles.progressBadge} aria-live="polite">
-                  <span className={styles.progressItem}>
-                    <strong>{unlockedStatesCount}</strong>/{totalStatesCount} Estados ({progressPercentage}%)
-                  </span>
-                  <span className={styles.progressDivider} aria-hidden="true">
-                    •
-                  </span>
-                  <span className={styles.progressItem}>
-                    <strong>{unlockedPointsCount}</strong>/{totalPointsCount} Destinos ({pointsProgressPercentage}% visitados)
-                  </span>
+                <div className={styles.searchSection}>
+                  <DestinationSearchBar viewModel={mapViewModel} />
                 </div>
               </div>
             </header>
