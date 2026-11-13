@@ -56,7 +56,7 @@ class ApiHandler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
@@ -65,7 +65,7 @@ class ApiHandler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(204)
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
 
@@ -119,6 +119,37 @@ class ApiHandler(BaseHTTPRequestHandler):
             body = json.loads(post_data.decode("utf-8"))
         except Exception:
             self._send_json(400, {"error": "Invalid JSON"})
+            return
+
+        if clean_path in ("/photos/delete", "/api/photos/delete"):
+            try:
+                photo_id = body.get("id") or body.get("photoId")
+                if not photo_id:
+                    self._send_json(400, {"error": "Missing photo id"})
+                    return
+
+                with open(PHOTOS_FILE, "r", encoding="utf-8") as f:
+                    photos = json.load(f)
+
+                # Delete corresponding file in UPLOADS_DIR if exists
+                deleted = [p for p in photos if p.get("id") == photo_id]
+                for p in deleted:
+                    img_url = p.get("imageUrl", "")
+                    if img_url.startswith("/uploads/"):
+                        fname = os.path.basename(img_url)
+                        fpath = os.path.join(UPLOADS_DIR, fname)
+                        if os.path.exists(fpath):
+                            try:
+                                os.remove(fpath)
+                            except Exception:
+                                pass
+
+                photos = [p for p in photos if p.get("id") != photo_id]
+                with open(PHOTOS_FILE, "w", encoding="utf-8") as f:
+                    json.dump(photos, f, ensure_ascii=False, indent=2)
+                self._send_json(200, {"status": "ok", "photosCount": len(photos)})
+            except Exception as e:
+                self._send_json(500, {"error": str(e)})
             return
 
         if clean_path in ("/photos", "/api/photos"):

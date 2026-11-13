@@ -31,6 +31,11 @@ export interface StorageService {
   saveTravelPhoto(photo: TravelPhoto): Promise<void>;
 
   /**
+   * Deletes a travel photo by its ID.
+   */
+  deleteTravelPhoto(photoId: string): Promise<void>;
+
+  /**
    * Resets all progress.
    */
   resetAll(): Promise<void>;

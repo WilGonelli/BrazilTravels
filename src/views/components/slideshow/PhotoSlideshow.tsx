@@ -1,6 +1,7 @@
 import React from 'react';
 import styles from './PhotoSlideshow.module.css';
 import { SlideshowViewModelContract } from '../../../viewmodels/useSlideshowViewModel';
+import { PhotoManagerModal } from '../modal/PhotoManagerModal';
 
 interface PhotoSlideshowProps {
   readonly viewModel: SlideshowViewModelContract;
@@ -11,7 +12,7 @@ interface PhotoSlideshowProps {
  */
 export const PhotoSlideshow: React.FC<PhotoSlideshowProps> = ({ viewModel }) => {
   const { state, actions } = viewModel;
-  const { photos, activePhoto, isPlaying } = state;
+  const { photos, activePhoto, isPlaying, isGalleryOpen } = state;
 
   return (
     <section className={styles.slideshowContainer} aria-label="Apresentação de Memórias de Viagem">
@@ -23,8 +24,23 @@ export const PhotoSlideshow: React.FC<PhotoSlideshowProps> = ({ viewModel }) => 
           </div>
           <h2 className={styles.heading}>Apresentação das Viagens Registradas</h2>
         </div>
-        <div className={styles.badge} aria-live="polite">
-          {photos.length} {photos.length === 1 ? 'Foto Registrada' : 'Fotos Registradas'}
+
+        <div className={styles.headerControls}>
+          {photos.length > 0 && (
+            <button
+              type="button"
+              className={styles.managePhotosBtn}
+              onClick={actions.handleOpenGallery}
+              aria-label="Gerenciar e remover fotos de viagem"
+              title="Gerenciar fotos"
+            >
+              🗑️ Gerenciar Fotos ({photos.length})
+            </button>
+          )}
+
+          <div className={styles.badge} aria-live="polite">
+            {photos.length} {photos.length === 1 ? 'Foto Registrada' : 'Fotos Registradas'}
+          </div>
         </div>
       </header>
 
@@ -59,7 +75,7 @@ export const PhotoSlideshow: React.FC<PhotoSlideshowProps> = ({ viewModel }) => 
                   onClick={actions.handleTogglePlayPause}
                   aria-label={isPlaying ? 'Pausar apresentação automática' : 'Iniciar apresentação automática'}
                 >
-                  {isPlaying ? '⏸ Pausar (15s)' : '▶ Reproduzir'}
+                  {isPlaying ? '⏸ Pausar (10s)' : '▶ Reproduzir'}
                 </button>
               )}
             </div>
@@ -77,6 +93,14 @@ export const PhotoSlideshow: React.FC<PhotoSlideshowProps> = ({ viewModel }) => 
           </div>
         )}
       </div>
+
+      {/* Photo Management & Removal Modal */}
+      <PhotoManagerModal
+        isOpen={isGalleryOpen}
+        photos={photos}
+        onClose={actions.handleCloseGallery}
+        onDeletePhoto={actions.handleDeletePhoto}
+      />
     </section>
   );
 };

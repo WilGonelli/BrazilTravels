@@ -9,6 +9,7 @@ export interface SlideshowState {
   readonly activePhoto: TravelPhoto | null;
   readonly isPlaying: boolean;
   readonly intervalMs: number;
+  readonly isGalleryOpen: boolean;
 }
 
 export interface SlideshowActions {
@@ -18,6 +19,9 @@ export interface SlideshowActions {
   readonly handleTogglePlayPause: () => void;
   readonly handleAddPhoto: (photo: TravelPhoto) => void;
   readonly handleAddPhotos: (photos: TravelPhoto[]) => void;
+  readonly handleOpenGallery: () => void;
+  readonly handleCloseGallery: () => void;
+  readonly handleDeletePhoto: (photoId: string) => Promise<void>;
 }
 
 export interface SlideshowViewModelContract {
@@ -32,11 +36,13 @@ const defaultStorage: StorageService = new LocalStorageService();
  */
 export function useSlideshowViewModel(
   storage: StorageService = defaultStorage,
-  intervalMs: number = 15000
+  intervalMs: number = 10000,
+  onPhotoDeleted?: (photoId: string) => void
 ): SlideshowViewModelContract {
   const [photos, setPhotos] = useState<TravelPhoto[]>([]);
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
+  const [isGalleryOpen, setIsGalleryOpen] = useState<boolean>(false);
 
   // Load photos on mount
   useEffect(() => {
@@ -127,6 +133,32 @@ export function useSlideshowViewModel(
     setActiveIndex(0);
   }, []);
 
+  const handleOpenGallery = useCallback(() => {
+    setIsGalleryOpen(true);
+  }, []);
+
+  const handleCloseGallery = useCallback(() => {
+    setIsGalleryOpen(false);
+  }, []);
+
+  const handleDeletePhoto = useCallback(
+    async (photoId: string) => {
+      await storage.deleteTravelPhoto(photoId);
+
+      setPhotos((prev) => {
+        const updated = prev.filter((p) => p.id !== photoId);
+        return updated;
+      });
+
+      setActiveIndex((prev) => (prev > 0 ? prev - 1 : 0));
+
+      if (onPhotoDeleted) {
+        onPhotoDeleted(photoId);
+      }
+    },
+    [storage, onPhotoDeleted]
+  );
+
   const activePhoto = photos[activeIndex] || null;
 
   return {
@@ -136,6 +168,7 @@ export function useSlideshowViewModel(
       activePhoto,
       isPlaying,
       intervalMs,
+      isGalleryOpen,
     },
     actions: {
       handleNext,
@@ -144,6 +177,9 @@ export function useSlideshowViewModel(
       handleTogglePlayPause,
       handleAddPhoto,
       handleAddPhotos,
+      handleOpenGallery,
+      handleCloseGallery,
+      handleDeletePhoto,
     },
   };
 }

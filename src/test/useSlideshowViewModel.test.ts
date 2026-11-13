@@ -35,6 +35,9 @@ class MockStorageService implements StorageService {
   async saveTravelPhoto(photo: TravelPhoto): Promise<void> {
     this.photos.push(photo);
   }
+  async deleteTravelPhoto(photoId: string): Promise<void> {
+    this.photos = this.photos.filter((p) => p.id !== photoId);
+  }
   async resetAll(): Promise<void> {
     this.photos = [];
   }
@@ -103,7 +106,7 @@ describe('useSlideshowViewModel', () => {
     await act(async () => {});
 
     expect(result.current.state.photos).toHaveLength(2);
-    expect(result.current.state.intervalMs).toBe(15000);
+    expect(result.current.state.intervalMs).toBe(10000);
 
     const newPhotos: TravelPhoto[] = [
       {
@@ -131,5 +134,34 @@ describe('useSlideshowViewModel', () => {
     expect(result.current.state.photos).toHaveLength(4);
     expect(result.current.state.activeIndex).toBe(0);
     expect(result.current.state.activePhoto?.id).toBe('new-1');
+  });
+
+  it('controls gallery modal open/close and deletes photos via handleDeletePhoto', async () => {
+    const { result } = renderHook(() => useSlideshowViewModel(mockStorage));
+    await act(async () => {});
+
+    expect(result.current.state.isGalleryOpen).toBe(false);
+
+    // Open gallery
+    act(() => {
+      result.current.actions.handleOpenGallery();
+    });
+    expect(result.current.state.isGalleryOpen).toBe(true);
+
+    // Delete photo-1
+    await act(async () => {
+      await result.current.actions.handleDeletePhoto('photo-1');
+    });
+
+    // Gallery remains open after delete!
+    expect(result.current.state.isGalleryOpen).toBe(true);
+    expect(result.current.state.photos).toHaveLength(1);
+    expect(result.current.state.photos[0].id).toBe('photo-2');
+
+    // Close gallery
+    act(() => {
+      result.current.actions.handleCloseGallery();
+    });
+    expect(result.current.state.isGalleryOpen).toBe(false);
   });
 });

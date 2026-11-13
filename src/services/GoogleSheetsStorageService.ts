@@ -240,6 +240,45 @@ export class GoogleSheetsStorageService implements StorageService {
   }
 
   /**
+   * Removes a travel photo across local fallback, device API, and cloud storage.
+   */
+  async deleteTravelPhoto(photoId: string): Promise<void> {
+    // 1. Delete from local cache
+    await this.fallbackService.deleteTravelPhoto(photoId);
+
+    // 2. Delete from local device API (/api/photos/delete)
+    if (typeof window !== 'undefined') {
+      try {
+        await fetch('/api/photos/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: photoId }),
+        });
+      } catch (err) {
+        console.warn('Failed to delete photo from local device API:', err);
+      }
+    }
+
+    // 3. Delete from Google Sheets if configured
+    if (this.scriptUrl) {
+      try {
+        await fetch(this.scriptUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8',
+          },
+          body: JSON.stringify({
+            action: 'deletePhoto',
+            photoId,
+          }),
+        });
+      } catch (error) {
+        console.error('Failed to delete travel photo from Google Sheets:', error);
+      }
+    }
+  }
+
+  /**
    * Clears all local storage records.
    */
   async resetAll(): Promise<void> {

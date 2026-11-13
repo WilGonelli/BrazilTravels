@@ -17,8 +17,8 @@ import { PhotoUploadModal } from './components/modal/PhotoUploadModal';
 export const AppView: React.FC = () => {
   const sharedStorage = useMemo(() => createDefaultStorageService(), []);
 
-  // 15-second automatic slideshow transition per user specification
-  const slideshowViewModel = useSlideshowViewModel(sharedStorage, 15000);
+  // 10-second automatic slideshow transition per user specification
+  const slideshowViewModel = useSlideshowViewModel(sharedStorage, 10000);
 
   const mapViewModel = useBrazilMapViewModel(
     sharedStorage,

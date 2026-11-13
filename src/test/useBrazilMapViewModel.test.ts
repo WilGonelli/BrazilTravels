@@ -34,6 +34,10 @@ class MockStorageService implements StorageService {
     this.photos.push(photo);
   }
 
+  async deleteTravelPhoto(photoId: string): Promise<void> {
+    this.photos = this.photos.filter((p) => p.id !== photoId);
+  }
+
   async resetAll(): Promise<void> {
     this.unlocked.clear();
     this.photos = [];

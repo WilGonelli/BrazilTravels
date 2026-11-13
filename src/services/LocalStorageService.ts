@@ -62,6 +62,16 @@ export class LocalStorageService implements StorageService {
     }
   }
 
+  async deleteTravelPhoto(photoId: string): Promise<void> {
+    try {
+      const current = await this.getTravelPhotos();
+      const updated = current.filter((p) => p.id !== photoId);
+      localStorage.setItem(PHOTOS_KEY, JSON.stringify(updated));
+    } catch (error) {
+      console.error('Failed to delete travel photo from localStorage:', error);
+    }
+  }
+
   async resetAll(): Promise<void> {
     try {
       localStorage.removeItem(UNLOCKED_KEY);
