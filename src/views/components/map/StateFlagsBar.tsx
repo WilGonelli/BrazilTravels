@@ -1,4 +1,5 @@
 import React from 'react';
+import { Flag, statesData } from 'br-state-flags';
 import styles from './StateFlagsBar.module.css';
 import { BrazilMapViewModelContract } from '../../../viewmodels/useBrazilMapViewModel';
 import { BrazilStateCode } from '../../../models/Destination';
@@ -11,7 +12,7 @@ interface StateFlagsBarProps {
 const ALL_STATE_CODES = Object.keys(BRAZIL_GEO_PATHS) as BrazilStateCode[];
 
 /**
- * Top ribbon displaying all 27 Federative Unit flags in scratch-off vs. colored style.
+ * Top ribbon displaying all 27 Federative Unit flags in scratch-off (locked) vs. official flag (unlocked) style.
  */
 export const StateFlagsBar: React.FC<StateFlagsBarProps> = ({ viewModel }) => {
   const { state, actions } = viewModel;
@@ -39,6 +40,8 @@ export const StateFlagsBar: React.FC<StateFlagsBarProps> = ({ viewModel }) => {
           const dest = destinations[stateId];
           const isUnlocked = dest?.isUnlocked ?? false;
           const isSelected = selectedStateCode === code;
+          const stateMetadata = statesData[code];
+          const stateName = stateMetadata?.name ?? code;
 
           return (
             <button
@@ -47,12 +50,25 @@ export const StateFlagsBar: React.FC<StateFlagsBarProps> = ({ viewModel }) => {
               className={`${styles.flagChip} ${isUnlocked ? styles.flagUnlocked : styles.flagLocked} ${
                 isSelected ? styles.flagSelected : ''
               }`}
-              style={isUnlocked ? { backgroundColor: dest.unlockedColor } : undefined}
               onClick={() => actions.handleSelectState(code)}
-              aria-label={`Filtrar destinos do estado ${code} - ${isUnlocked ? 'Liberado' : 'Bloqueado'}`}
+              aria-label={`Filtrar destinos de ${stateName} (${code}) - ${
+                isUnlocked ? 'Bandeira oficial liberada' : 'Bloqueado (Raspadinha)'
+              }`}
+              title={`${stateName} (${code}) - ${isUnlocked ? 'Liberado' : 'Bloqueado'}`}
               aria-pressed={isSelected}
             >
-              {code}
+              {isUnlocked ? (
+                <>
+                  <div className={styles.flagSvgWrapper} aria-hidden="true">
+                    <Flag uf={code} width="100%" height="100%" accessible={false} />
+                  </div>
+                  <span className={styles.flagCodeBadge} aria-hidden="true">
+                    {code}
+                  </span>
+                </>
+              ) : (
+                <span className={styles.lockedCode}>{code}</span>
+              )}
             </button>
           );
         })}
@@ -60,3 +76,4 @@ export const StateFlagsBar: React.FC<StateFlagsBarProps> = ({ viewModel }) => {
     </div>
   );
 };
+

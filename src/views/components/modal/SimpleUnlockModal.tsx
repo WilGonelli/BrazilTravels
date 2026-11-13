@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { Flag } from 'br-state-flags';
 import styles from './SimpleUnlockModal.module.css';
 import { Destination, DestinationCategory } from '../../../models/Destination';
 
@@ -79,7 +80,12 @@ export const SimpleUnlockModal: React.FC<SimpleUnlockModalProps> = ({
         <header className={styles.modalHeader}>
           <div className={styles.headerInfo}>
             <span className={styles.categoryBadge}>{categoryLabel}</span>
-            <span className={styles.headerState}>{destination.stateCode}</span>
+            <span className={styles.headerState}>
+              <span className={styles.headerFlag} aria-hidden="true">
+                <Flag uf={destination.stateCode} width="22" height="15" accessible={false} />
+              </span>
+              <span>{destination.stateCode}</span>
+            </span>
           </div>
           <button
             ref={closeBtnRef}

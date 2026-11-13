@@ -53,37 +53,80 @@
 }
 
 .flagChip {
-  width: 32px;
+  width: 42px;
   height: 28px;
-  border-radius: 5px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  overflow: hidden;
   font-size: 0.7rem;
   font-weight: 800;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   flex-shrink: 0;
+  padding: 0;
+  background: transparent;
 }
 
 .flagChip:hover {
   transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
 }
 
 .flagLocked {
-  background: linear-gradient(135deg, #b0b5be 0%, #828994 100%);
-  color: #111827;
+  background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+  color: #0f172a;
+}
+
+.lockedCode {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
 .flagUnlocked {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background-color: transparent;
+}
+
+.flagSvgWrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flagSvgWrapper svg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.flagCodeBadge {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  background: rgba(15, 23, 42, 0.85);
   color: #ffffff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  font-size: 0.52rem;
+  font-weight: 800;
+  padding: 0 3px;
+  border-radius: 3px;
+  line-height: 1.1;
+  pointer-events: none;
+  backdrop-filter: blur(2px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .flagSelected {
-  outline: 2px solid var(--accent-cyan);
-  outline-offset: 1px;
+  outline: 2.5px solid var(--accent-cyan);
+  outline-offset: 1.5px;
 }
 
 /* Mobile responsive adjustments */
@@ -104,8 +147,16 @@
   }
 
   .flagChip {
-    width: 30px;
-    height: 26px;
-    font-size: 0.65rem;
+    width: 36px;
+    height: 24px;
+  }
+
+  .lockedCode {
+    font-size: 0.62rem;
+  }
+
+  .flagCodeBadge {
+    font-size: 0.48rem;
+    padding: 0 2px;
   }
 }
