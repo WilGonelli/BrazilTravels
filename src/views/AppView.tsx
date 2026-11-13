@@ -39,9 +39,6 @@ export const AppView: React.FC = () => {
 
   return (
     <main className={styles.appLayout}>
-      {/* Top Banner Ribbon: 27 State Flags */}
-      <StateFlagsBar viewModel={mapViewModel} />
-
       {/* Upper Presentation Slideshow */}
       <PhotoSlideshow viewModel={slideshowViewModel} />
 
@@ -89,8 +86,9 @@ export const AppView: React.FC = () => {
             <BrazilMapSvg viewModel={mapViewModel} />
           </div>
 
-          {/* Right Column: Principais Praias */}
-          <aside className={styles.rightColumn} aria-label="Principais Praias">
+          {/* Right Column: Bandeiras dos Estados & Principais Praias */}
+          <aside className={styles.rightColumn} aria-label="Bandeiras dos Estados e Principais Praias">
+            <StateFlagsBar viewModel={mapViewModel} />
             <CategorySidebar title="Principais Praias" category="Beach" viewModel={mapViewModel} />
           </aside>
         </div>
