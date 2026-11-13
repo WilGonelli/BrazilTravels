@@ -67,7 +67,7 @@ describe('StateFlagsBar component', () => {
     const mockVm = createMockViewModel();
     render(<StateFlagsBar viewModel={mockVm} />);
 
-    expect(screen.getByText(/Bandeiras dos Estados \(Raspadinha\):/i)).toBeInTheDocument();
+    expect(screen.getByText(/Estados:/i)).toBeInTheDocument();
 
     const buttons = screen.getAllByRole('button');
     // At least 27 state flag buttons

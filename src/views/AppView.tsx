@@ -39,64 +39,73 @@ export const AppView: React.FC = () => {
 
   return (
     <main className={styles.appLayout}>
-      {/* Upper Presentation Slideshow */}
-      <PhotoSlideshow viewModel={slideshowViewModel} />
+      <div className={styles.pageGrid}>
+        {/* Main Column: Image Card on top, Map Poster Card below */}
+        <div className={styles.mainColumn}>
+          {/* Upper Presentation Slideshow */}
+          <PhotoSlideshow viewModel={slideshowViewModel} />
 
-      {/* Lower Interactive Scratch-off Map Poster */}
-      <section className={styles.mapPosterContainer} aria-label="Poster do Mapa do Brasil">
-        <header className={styles.mapHeader}>
-          <div className={styles.posterTitleGroup}>
-            <h1 className={styles.mainTitle}>MAPA DO BRASIL • ESTILO RASPAGEM</h1>
-            <p className={styles.subTitle}>
-              {selectedStateCode
-                ? `Exibindo destinos de ${selectedStateCode}. Clique no estado novamente para desmarcar.`
-                : 'Fronteiras geográficas oficiais do IBGE. Clique em qualquer local para liberar e raspar!'}
-            </p>
-          </div>
+          {/* Lower Interactive Scratch-off Map Poster */}
+          <section className={styles.mapPosterContainer} aria-label="Poster do Mapa do Brasil">
+            <header className={styles.mapHeader}>
+              <div className={styles.posterTitleGroup}>
+                <h1 className={styles.mainTitle}>MAPA DO BRASIL • ESTILO RASPAGEM</h1>
+                <p className={styles.subTitle}>
+                  {selectedStateCode
+                    ? `Exibindo destinos de ${selectedStateCode}. Clique no estado novamente para desmarcar.`
+                    : 'Fronteiras geográficas oficiais do IBGE. Clique em qualquer local para liberar e raspar!'}
+                </p>
+              </div>
 
-          <div className={styles.headerActions}>
-            {selectedStateCode && (
-              <button
-                type="button"
-                className={styles.clearFilterBtn}
-                onClick={() => actions.handleSelectState(null)}
-              >
-                ✕ Limpar Filtro ({selectedStateCode})
-              </button>
-            )}
+              <div className={styles.headerActions}>
+                {selectedStateCode && (
+                  <button
+                    type="button"
+                    className={styles.clearFilterBtn}
+                    onClick={() => actions.handleSelectState(null)}
+                  >
+                    ✕ Limpar Filtro ({selectedStateCode})
+                  </button>
+                )}
 
-            <div className={styles.progressBadge} aria-live="polite">
-              Progresso: {unlockedStatesCount} / {totalStatesCount} Estados ({progressPercentage}%)
+                <div className={styles.progressBadge} aria-live="polite">
+                  Progresso: {unlockedStatesCount} / {totalStatesCount} Estados ({progressPercentage}%)
+                </div>
+              </div>
+            </header>
+
+            {/* 3-Column Poster Layout */}
+            <div className={styles.posterGrid}>
+              {/* Left Column: Cidades, Pontos Turísticos, Cachoeiras, Ilhas */}
+              <aside className={styles.leftColumn} aria-label="Categorias de Destinos">
+                <CategorySidebar title="Cidades Famosas" category="FamousCity" viewModel={mapViewModel} />
+                <CategorySidebar title="Pontos Turísticos" category="TouristSpot" viewModel={mapViewModel} />
+                <CategorySidebar title="Cachoeiras" category="Waterfall" viewModel={mapViewModel} />
+                <CategorySidebar title="Ilhas" category="Island" viewModel={mapViewModel} />
+              </aside>
+
+              {/* Center Column: Brazil Vector Map */}
+              <div className={styles.centerColumn}>
+                <BrazilMapSvg viewModel={mapViewModel} />
+              </div>
+
+              {/* Right Column: Principais Praias */}
+              <aside className={styles.rightColumn} aria-label="Principais Praias">
+                <CategorySidebar title="Principais Praias" category="Beach" viewModel={mapViewModel} />
+              </aside>
             </div>
-          </div>
-        </header>
 
-        {/* 3-Column Poster Layout */}
-        <div className={styles.posterGrid}>
-          {/* Left Column: Cidades, Pontos Turísticos, Cachoeiras, Ilhas */}
-          <aside className={styles.leftColumn} aria-label="Categorias de Destinos">
-            <CategorySidebar title="Cidades Famosas" category="FamousCity" viewModel={mapViewModel} />
-            <CategorySidebar title="Pontos Turísticos" category="TouristSpot" viewModel={mapViewModel} />
-            <CategorySidebar title="Cachoeiras" category="Waterfall" viewModel={mapViewModel} />
-            <CategorySidebar title="Ilhas" category="Island" viewModel={mapViewModel} />
-          </aside>
-
-          {/* Center Column: Brazil Vector Map */}
-          <div className={styles.centerColumn}>
-            <BrazilMapSvg viewModel={mapViewModel} />
-          </div>
-
-          {/* Right Column: Bandeiras dos Estados & Principais Praias */}
-          <aside className={styles.rightColumn} aria-label="Bandeiras dos Estados e Principais Praias">
-            <StateFlagsBar viewModel={mapViewModel} />
-            <CategorySidebar title="Principais Praias" category="Beach" viewModel={mapViewModel} />
-          </aside>
+            <footer className={styles.footerNote}>
+              Otimizado para exibição em Totem Vertical (1080×1920) e Monitores Desktop • MVVM Architecture
+            </footer>
+          </section>
         </div>
 
-        <footer className={styles.footerNote}>
-          Otimizado para exibição em Totem Vertical (1080×1920) e Monitores Desktop • MVVM Architecture
-        </footer>
-      </section>
+        {/* Right Lateral Column: State Flags Card spanning the full height along image and map */}
+        <aside className={styles.flagsSidebar} aria-label="Estados do Brasil">
+          <StateFlagsBar viewModel={mapViewModel} />
+        </aside>
+      </div>
 
       {/* Minimalist Unlock Confirmation Modal */}
       <SimpleUnlockModal

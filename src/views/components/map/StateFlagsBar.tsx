@@ -21,7 +21,7 @@ export const StateFlagsBar: React.FC<StateFlagsBarProps> = ({ viewModel }) => {
   return (
     <div className={styles.flagsBarContainer} aria-label="Bandeiras e siglas dos Estados do Brasil">
       <div className={styles.headerRow}>
-        <span className={styles.title}>Bandeiras dos Estados (Raspadinha):</span>
+        <span className={styles.title}>Estados:</span>
         {selectedStateCode && (
           <button
             type="button"
@@ -29,7 +29,7 @@ export const StateFlagsBar: React.FC<StateFlagsBarProps> = ({ viewModel }) => {
             onClick={() => actions.handleSelectState(null)}
             aria-label="Limpar filtro de estado"
           >
-            ✕ Limpar seleção ({selectedStateCode})
+            ✕ Limpar ({selectedStateCode})
           </button>
         )}
       </div>

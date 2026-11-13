@@ -39,7 +39,6 @@ export const PhotoSlideshow: React.FC<PhotoSlideshowProps> = ({ viewModel }) => 
                 alt={`Foto de ${activePhoto.destinationName}`}
                 className={styles.heroImage}
               />
-              <span className={styles.heroBadge}>★ DESTINO DESBLOQUEADO</span>
             </div>
 
             <div className={styles.metaSection}>
