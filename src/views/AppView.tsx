@@ -31,6 +31,9 @@ export const AppView: React.FC = () => {
     unlockedStatesCount,
     totalStatesCount,
     progressPercentage,
+    unlockedPointsCount,
+    totalPointsCount,
+    pointsProgressPercentage,
     isUnlockModalOpen,
     pendingDestination,
     isPhotoModalOpen,
@@ -69,7 +72,15 @@ export const AppView: React.FC = () => {
                 )}
 
                 <div className={styles.progressBadge} aria-live="polite">
-                  Progresso: {unlockedStatesCount} / {totalStatesCount} Estados ({progressPercentage}%)
+                  <span className={styles.progressItem}>
+                    <strong>{unlockedStatesCount}</strong>/{totalStatesCount} Estados ({progressPercentage}%)
+                  </span>
+                  <span className={styles.progressDivider} aria-hidden="true">
+                    •
+                  </span>
+                  <span className={styles.progressItem}>
+                    <strong>{unlockedPointsCount}</strong>/{totalPointsCount} Destinos ({pointsProgressPercentage}% visitados)
+                  </span>
                 </div>
               </div>
             </header>

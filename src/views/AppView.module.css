@@ -112,6 +112,23 @@
   padding: 8px 16px;
   border-radius: 12px;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progressItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.progressItem strong {
+  color: var(--accent-cyan);
+}
+
+.progressDivider {
+  color: var(--text-muted);
 }
 
 /* 3-Column Poster Layout */

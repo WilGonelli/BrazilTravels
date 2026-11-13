@@ -12,6 +12,9 @@ export interface BrazilMapState {
   readonly unlockedStatesCount: number;
   readonly totalStatesCount: number;
   readonly progressPercentage: number;
+  readonly unlockedPointsCount: number;
+  readonly totalPointsCount: number;
+  readonly pointsProgressPercentage: number;
   readonly isUnlockModalOpen: boolean;
   readonly pendingDestination: Destination | null;
   readonly isPhotoModalOpen: boolean;
@@ -73,16 +76,34 @@ export function useBrazilMapViewModel(
     };
   }, [storage]);
 
-  // Derived state: calculate total unlocked states count (out of 27)
-  const { unlockedStatesCount, totalStatesCount, progressPercentage } = useMemo(() => {
-    const states = Object.values(destinations).filter((d) => d.category === 'State');
-    const unlocked = states.filter((d) => d.isUnlocked).length;
-    const total = states.length || 27;
-    const percentage = Math.round((unlocked / total) * 100);
+  // Derived state: calculate total progress for states and destination points
+  const {
+    unlockedStatesCount,
+    totalStatesCount,
+    progressPercentage,
+    unlockedPointsCount,
+    totalPointsCount,
+    pointsProgressPercentage,
+  } = useMemo(() => {
+    const all = Object.values(destinations);
+    const states = all.filter((d) => d.category === 'State');
+    const points = all.filter((d) => d.category !== 'State');
+
+    const unlockedStates = states.filter((d) => d.isUnlocked).length;
+    const totalStates = states.length || 27;
+    const statesPercentage = Math.round((unlockedStates / totalStates) * 100);
+
+    const unlockedPoints = points.filter((d) => d.isUnlocked).length;
+    const totalPoints = points.length;
+    const pointsPercentage = totalPoints > 0 ? Math.round((unlockedPoints / totalPoints) * 100) : 0;
+
     return {
-      unlockedStatesCount: unlocked,
-      totalStatesCount: total,
-      progressPercentage: percentage,
+      unlockedStatesCount: unlockedStates,
+      totalStatesCount: totalStates,
+      progressPercentage: statesPercentage,
+      unlockedPointsCount: unlockedPoints,
+      totalPointsCount: totalPoints,
+      pointsProgressPercentage: pointsPercentage,
     };
   }, [destinations]);
 
@@ -215,6 +236,9 @@ export function useBrazilMapViewModel(
       unlockedStatesCount,
       totalStatesCount,
       progressPercentage,
+      unlockedPointsCount,
+      totalPointsCount,
+      pointsProgressPercentage,
       isUnlockModalOpen: pendingDestination !== null,
       pendingDestination,
       isPhotoModalOpen: targetPhotoDestination !== null,

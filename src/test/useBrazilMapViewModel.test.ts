@@ -54,6 +54,8 @@ describe('useBrazilMapViewModel', () => {
     expect(result.current.state.isLoading).toBe(false);
     expect(result.current.state.unlockedStatesCount).toBe(0);
     expect(result.current.state.progressPercentage).toBe(0);
+    expect(result.current.state.unlockedPointsCount).toBe(0);
+    expect(result.current.state.pointsProgressPercentage).toBe(0);
     expect(result.current.state.totalStatesCount).toBe(27);
     expect(result.current.state.selectedStateCode).toBeNull();
     // In global view with nothing unlocked, displayedDestinations is empty
