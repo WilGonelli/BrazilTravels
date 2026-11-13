@@ -7,6 +7,7 @@ import { PhotoSlideshow } from './components/slideshow/PhotoSlideshow';
 import { BrazilMapSvg } from './components/map/BrazilMapSvg';
 import { CategorySidebar } from './components/map/CategorySidebar';
 import { StateFlagsBar } from './components/map/StateFlagsBar';
+import { DestinationSearchBar } from './components/search/DestinationSearchBar';
 import { SimpleUnlockModal } from './components/modal/SimpleUnlockModal';
 import { PhotoUploadModal } from './components/modal/PhotoUploadModal';
 
@@ -60,6 +61,10 @@ export const AppView: React.FC = () => {
                 </p>
               </div>
 
+              <div className={styles.searchSection}>
+                <DestinationSearchBar viewModel={mapViewModel} />
+              </div>
+
               <div className={styles.headerActions}>
                 {selectedStateCode && (
                   <button
@@ -84,6 +89,21 @@ export const AppView: React.FC = () => {
                 </div>
               </div>
             </header>
+
+            {/* Visual Gradient Progress Bar */}
+            <div
+              className={styles.progressBarWrapper}
+              role="progressbar"
+              aria-valuenow={pointsProgressPercentage}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Progresso geral de viagens: ${pointsProgressPercentage}% dos destinos visitados e ${progressPercentage}% dos estados explorados`}
+            >
+              <div
+                className={styles.progressBarFill}
+                style={{ width: `${Math.min(100, Math.max(pointsProgressPercentage, 2))}%` }}
+              />
+            </div>
 
             {/* 3-Column Poster Layout */}
             <div className={styles.posterGrid}>

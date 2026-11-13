@@ -152,4 +152,49 @@ describe('useBrazilMapViewModel', () => {
     expect(mockStorage.savedPhotos).toHaveLength(2);
     expect(mockStorage.savedPhotos[0].destinationName).toContain('Jericoacoara');
   });
+
+  it('filters destination search results and handles selection', async () => {
+    const { result } = renderHook(() => useBrazilMapViewModel(mockStorage));
+    await act(async () => {});
+
+    expect(result.current.state.searchQuery).toBe('');
+    expect(result.current.state.searchResults).toEqual([]);
+
+    // Single character query should not trigger search
+    act(() => {
+      result.current.actions.handleSearchChange('f');
+    });
+    expect(result.current.state.searchQuery).toBe('f');
+    expect(result.current.state.searchResults).toHaveLength(0);
+
+    // Search for 'felix' (Praia do Félix in SP)
+    act(() => {
+      result.current.actions.handleSearchChange('felix');
+    });
+    expect(result.current.state.searchResults.length).toBeGreaterThan(0);
+    expect(result.current.state.searchResults[0].name).toContain('Félix');
+
+    // Select search result
+    const selected = result.current.state.searchResults[0];
+    act(() => {
+      result.current.actions.handleSelectSearchResult(selected);
+    });
+
+    // Query cleared, state selected, and unlock modal triggered for locked item
+    expect(result.current.state.searchQuery).toBe('');
+    expect(result.current.state.selectedStateCode).toBe('SP');
+    expect(result.current.state.isUnlockModalOpen).toBe(true);
+    expect(result.current.state.pendingDestination?.id).toBe(selected.id);
+
+    // Clear search action
+    act(() => {
+      result.current.actions.handleSearchChange('ubatuba');
+    });
+    expect(result.current.state.searchQuery).toBe('ubatuba');
+    act(() => {
+      result.current.actions.handleClearSearch();
+    });
+    expect(result.current.state.searchQuery).toBe('');
+    expect(result.current.state.searchResults).toHaveLength(0);
+  });
 });

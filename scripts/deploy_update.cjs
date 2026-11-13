@@ -4,6 +4,7 @@ const path = require('path');
 
 const conn = new Client();
 const archivePath = path.resolve(__dirname, '../dist_update.tar.gz');
+const apiServerPath = path.resolve(__dirname, 'api_server.py');
 
 conn.on('ready', () => {
   console.log('SSH connection established');
@@ -14,33 +15,55 @@ conn.on('ready', () => {
       process.exit(1);
     }
 
-    console.log('Uploading dist_update.tar.gz...');
-    const readStream = fs.createReadStream(archivePath);
-    const writeStream = sftp.createWriteStream('/tmp/dist_update.tar.gz');
+    console.log('Uploading dist_update.tar.gz and api_server.py...');
+    
+    // Upload dist archive
+    const readArchive = fs.createReadStream(archivePath);
+    const writeArchive = sftp.createWriteStream('/tmp/dist_update.tar.gz');
 
-    writeStream.on('close', () => {
-      console.log('Upload complete. Extracting and reloading kiosk...');
-      const cmd = 'echo admin | sudo -S tar -xzf /tmp/dist_update.tar.gz -C /var/www/brazil-travels && echo admin | sudo -S chown -R www-data:www-data /var/www/brazil-travels && export DISPLAY=:0 && /home/pi/reload.sh';
+    writeArchive.on('close', () => {
+      console.log('Frontend archive uploaded.');
       
-      conn.exec(cmd, (execErr, stream) => {
-        if (execErr) {
-          console.error('Exec error:', execErr);
-          conn.end();
-          process.exit(1);
-        }
+      // Upload api_server.py
+      const readApi = fs.createReadStream(apiServerPath);
+      const writeApi = sftp.createWriteStream('/tmp/api_server.py');
 
-        stream.on('close', (code, signal) => {
-          console.log(`Command closed with code ${code}`);
-          conn.end();
-        }).on('data', (data) => {
-          console.log('STDOUT:', data.toString());
-        }).stderr.on('data', (data) => {
-          console.error('STDERR:', data.toString());
+      writeApi.on('close', () => {
+        console.log('api_server.py uploaded. Executing deploy and restart...');
+        
+        const cmd = [
+          'echo admin | sudo -S tar -xzf /tmp/dist_update.tar.gz -C /var/www/brazil-travels',
+          'echo admin | sudo -S cp /tmp/api_server.py /var/www/brazil-travels/api_server.py',
+          'echo admin | sudo -S chmod +x /var/www/brazil-travels/api_server.py',
+          'echo admin | sudo -S mkdir -p /var/www/brazil-travels/uploads /var/www/brazil-travels/data',
+          'echo admin | sudo -S chown -R www-data:www-data /var/www/brazil-travels',
+          'echo admin | sudo -S chmod -R 775 /var/www/brazil-travels/uploads /var/www/brazil-travels/data',
+          'echo admin | sudo -S systemctl restart brazil-travels-api.service',
+          'export DISPLAY=:0 && /home/pi/reload.sh'
+        ].join(' && ');
+
+        conn.exec(cmd, (execErr, stream) => {
+          if (execErr) {
+            console.error('Exec error:', execErr);
+            conn.end();
+            process.exit(1);
+          }
+
+          stream.on('close', (code, signal) => {
+            console.log(`Deploy command finished with code ${code}`);
+            conn.end();
+          }).on('data', (data) => {
+            console.log('STDOUT:', data.toString().trim());
+          }).stderr.on('data', (data) => {
+            console.error('STDERR:', data.toString().trim());
+          });
         });
       });
+
+      readApi.pipe(writeApi);
     });
 
-    readStream.pipe(writeStream);
+    readArchive.pipe(writeArchive);
   });
 }).on('error', (err) => {
   console.error('Connection error:', err);

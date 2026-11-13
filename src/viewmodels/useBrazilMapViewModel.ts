@@ -15,6 +15,8 @@ export interface BrazilMapState {
   readonly unlockedPointsCount: number;
   readonly totalPointsCount: number;
   readonly pointsProgressPercentage: number;
+  readonly searchQuery: string;
+  readonly searchResults: readonly Destination[];
   readonly isUnlockModalOpen: boolean;
   readonly pendingDestination: Destination | null;
   readonly isPhotoModalOpen: boolean;
@@ -31,6 +33,9 @@ export interface BrazilMapActions {
   readonly handleClosePhotoUpload: () => void;
   readonly handleSavePhoto: (destinationId: string, photoDataUrl: string, caption?: string) => Promise<void>;
   readonly handleSavePhotos: (destinationId: string, photoDataUrls: string[], caption?: string) => Promise<void>;
+  readonly handleSearchChange: (query: string) => void;
+  readonly handleClearSearch: () => void;
+  readonly handleSelectSearchResult: (destination: Destination) => void;
   readonly handleResetAll: () => Promise<void>;
 }
 
@@ -40,6 +45,16 @@ export interface BrazilMapViewModelContract {
 }
 
 const defaultStorage: StorageService = createDefaultStorageService();
+
+/**
+ * Normalizes text by removing diacritics / accents and converting to lower case for resilient search matching.
+ */
+function normalizeSearchText(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
 
 /**
  * Custom ViewModel hook orchestrating map state, dynamic sidebars, and cascading unlock rules.
@@ -53,6 +68,7 @@ export function useBrazilMapViewModel(
   const [selectedStateCode, setSelectedStateCode] = useState<BrazilStateCode | null>(null);
   const [pendingDestination, setPendingDestination] = useState<Destination | null>(null);
   const [targetPhotoDestination, setTargetPhotoDestination] = useState<Destination | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
 
   // Initialize and load saved state from storage
@@ -122,13 +138,47 @@ export function useBrazilMapViewModel(
     return all.filter((d) => d.isUnlocked && d.category !== 'State');
   }, [destinations, selectedStateCode]);
 
+  // Derived state: Quick destination search results with accent-insensitive fuzzy matching
+  const searchResults = useMemo(() => {
+    const normalizedQuery = normalizeSearchText(searchQuery.trim());
+    if (normalizedQuery.length < 2) return [];
+
+    const all = Object.values(destinations);
+    return all
+      .filter((d) => {
+        if (d.category === 'State') return false;
+        const normalizedName = normalizeSearchText(d.name);
+        const normalizedState = normalizeSearchText(d.stateCode);
+        return normalizedName.includes(normalizedQuery) || normalizedState === normalizedQuery;
+      })
+      .slice(0, 8);
+  }, [destinations, searchQuery]);
+
   // Actions
   const handleSelectState = useCallback((stateCode: BrazilStateCode | null) => {
     setSelectedStateCode((prev) => (prev === stateCode ? null : stateCode));
   }, []);
 
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
+
+  const handleClearSearch = useCallback(() => {
+    setSearchQuery('');
+  }, []);
+
   const handleRequestUnlock = useCallback((destination: Destination) => {
     setPendingDestination(destination);
+  }, []);
+
+  const handleSelectSearchResult = useCallback((destination: Destination) => {
+    setSearchQuery('');
+    // Automatically select the state of the destination
+    setSelectedStateCode(destination.stateCode);
+
+    if (!destination.isUnlocked) {
+      setPendingDestination(destination);
+    }
   }, []);
 
   const handleCancelUnlock = useCallback(() => {
@@ -239,6 +289,8 @@ export function useBrazilMapViewModel(
       unlockedPointsCount,
       totalPointsCount,
       pointsProgressPercentage,
+      searchQuery,
+      searchResults,
       isUnlockModalOpen: pendingDestination !== null,
       pendingDestination,
       isPhotoModalOpen: targetPhotoDestination !== null,
@@ -254,6 +306,9 @@ export function useBrazilMapViewModel(
       handleClosePhotoUpload,
       handleSavePhoto,
       handleSavePhotos,
+      handleSearchChange,
+      handleClearSearch,
+      handleSelectSearchResult,
       handleResetAll,
     },
   };
