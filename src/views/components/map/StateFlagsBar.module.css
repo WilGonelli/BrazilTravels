@@ -134,34 +134,83 @@
   outline-offset: 1.5px;
 }
 
-/* Mobile responsive adjustments */
-@media (max-width: 640px) {
+/* Tablet & Mobile Responsiveness (wrapped horizontal layout with no horizontal scroll) */
+@media (max-width: 1024px) {
   .flagsBarContainer {
-    padding: 10px 12px;
-    border-radius: 12px;
-    gap: 8px;
+    height: auto;
+    padding: 12px 14px;
+    border-radius: 14px;
+    gap: 10px;
+  }
+
+  .headerRow {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding-bottom: 8px;
   }
 
   .title {
+    font-size: 0.8rem;
+    text-align: left;
+  }
+
+  .resetFilterBtn {
     font-size: 0.72rem;
+    padding: 4px 8px;
   }
 
   .flagsGrid {
-    gap: 4px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
     justify-content: center;
+    align-items: center;
+    overflow-y: visible;
+    overflow-x: hidden;
+    width: 100%;
   }
 
   .flagChip {
-    width: 36px;
-    height: 24px;
+    width: 44px;
+    height: 30px;
+    flex: 0 0 44px;
+    border-radius: 6px;
   }
 
   .lockedCode {
-    font-size: 0.62rem;
+    font-size: 0.72rem;
   }
 
   .flagCodeBadge {
-    font-size: 0.48rem;
+    font-size: 0.52rem;
+    padding: 0 3px;
+  }
+}
+
+@media (max-width: 480px) {
+  .flagsBarContainer {
+    padding: 10px 10px;
+    gap: 8px;
+  }
+
+  .flagsGrid {
+    gap: 5px;
+  }
+
+  .flagChip {
+    width: 38px;
+    height: 26px;
+    flex: 0 0 38px;
+  }
+
+  .lockedCode {
+    font-size: 0.65rem;
+  }
+
+  .flagCodeBadge {
+    font-size: 0.46rem;
     padding: 0 2px;
   }
 }
