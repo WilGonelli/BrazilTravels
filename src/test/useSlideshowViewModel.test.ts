@@ -82,8 +82,9 @@ describe('useSlideshowViewModel', () => {
     expect(result.current.state.activeIndex).toBe(1);
   });
 
-  it('toggles play/pause state', () => {
+  it('toggles play/pause state', async () => {
     const { result } = renderHook(() => useSlideshowViewModel(mockStorage));
+    await act(async () => {});
     expect(result.current.state.isPlaying).toBe(true);
 
     act(() => {

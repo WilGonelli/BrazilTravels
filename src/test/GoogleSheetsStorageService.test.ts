@@ -117,4 +117,53 @@ describe('GoogleSheetsStorageService', () => {
     expect(fallback.unlocked.has('sp-ubatuba-felix')).toBe(true);
     expect(fallback.unlocked.has('state-SP')).toBe(true);
   });
+
+  it('safely filters out non-photo items (e.g. string arrays) and falls back to local storage', async () => {
+    fallback.photos.push({
+      id: 'local-photo',
+      destinationId: 'sp-ubatuba-felix',
+      destinationName: 'Praia do Félix',
+      stateCode: 'SP',
+      imageUrl: 'data:image/jpeg;base64,valid',
+      createdAt: '2026-11-13',
+    });
+
+    // Remote returns array of strings (destination IDs, not photos!)
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => ['state-SP', 'test-point', 'sp-ubatuba-felix'],
+    } as Response);
+
+    const service = new GoogleSheetsStorageService(mockScriptUrl, fallback);
+    const photos = await service.getTravelPhotos();
+
+    // Must return the valid local fallback photo and not strings!
+    expect(photos).toHaveLength(1);
+    expect(photos[0].id).toBe('local-photo');
+    expect(photos[0].destinationName).toBe('Praia do Félix');
+  });
+
+  it('retrieves valid TravelPhoto objects when returned by remote', async () => {
+    const validRemotePhotos: TravelPhoto[] = [
+      {
+        id: 'remote-1',
+        destinationId: 'sp-ubatuba-felix',
+        destinationName: 'Praia do Félix',
+        stateCode: 'SP',
+        imageUrl: 'data:image/jpeg;base64,remote1',
+        createdAt: '2026-11-13',
+      },
+    ];
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => validRemotePhotos,
+    } as Response);
+
+    const service = new GoogleSheetsStorageService(mockScriptUrl, fallback);
+    const photos = await service.getTravelPhotos();
+
+    expect(photos).toHaveLength(1);
+    expect(photos[0].id).toBe('remote-1');
+  });
 });

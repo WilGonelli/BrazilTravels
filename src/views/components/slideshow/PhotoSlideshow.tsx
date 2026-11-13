@@ -35,6 +35,7 @@ export const PhotoSlideshow: React.FC<PhotoSlideshowProps> = ({ viewModel }) => 
             <>
               <div className={styles.imageWrapper}>
                 <img
+                  key={activePhoto.id}
                   src={activePhoto.imageUrl}
                   alt={`Foto de ${activePhoto.destinationName}`}
                   className={styles.heroImage}

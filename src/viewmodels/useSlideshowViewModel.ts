@@ -41,14 +41,43 @@ export function useSlideshowViewModel(
   useEffect(() => {
     let isMounted = true;
     async function loadPhotos() {
-      const stored = await storage.getTravelPhotos();
-      if (isMounted) {
-        setPhotos(stored);
+      try {
+        const stored = await storage.getTravelPhotos();
+        if (isMounted) {
+          setPhotos(stored);
+        }
+      } catch (err) {
+        console.warn('Failed to load photos:', err);
       }
     }
     loadPhotos();
     return () => {
       isMounted = false;
+    };
+  }, [storage]);
+
+  // Periodic background photo sync so kiosk picks up photos uploaded from other devices
+  useEffect(() => {
+    let isMounted = true;
+    const interval = setInterval(async () => {
+      try {
+        const stored = await storage.getTravelPhotos();
+        if (isMounted && stored.length > 0) {
+          setPhotos((prev) => {
+            if (stored.length !== prev.length || stored[0]?.id !== prev[0]?.id) {
+              return stored;
+            }
+            return prev;
+          });
+        }
+      } catch (err) {
+        console.warn('Background photo poll failed:', err);
+      }
+    }, 15000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
     };
   }, [storage]);
 

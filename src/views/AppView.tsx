@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import styles from './AppView.module.css';
 import { useBrazilMapViewModel } from '../viewmodels/useBrazilMapViewModel';
 import { useSlideshowViewModel } from '../viewmodels/useSlideshowViewModel';
+import { createDefaultStorageService } from '../services/StorageFactory';
 import { PhotoSlideshow } from './components/slideshow/PhotoSlideshow';
 import { BrazilMapSvg } from './components/map/BrazilMapSvg';
 import { CategorySidebar } from './components/map/CategorySidebar';
@@ -13,10 +14,12 @@ import { PhotoUploadModal } from './components/modal/PhotoUploadModal';
  * Main application view following the strict MVVM architecture.
  */
 export const AppView: React.FC = () => {
-  const slideshowViewModel = useSlideshowViewModel();
+  const sharedStorage = useMemo(() => createDefaultStorageService(), []);
+
+  const slideshowViewModel = useSlideshowViewModel(sharedStorage, 7000);
 
   const mapViewModel = useBrazilMapViewModel(
-    undefined,
+    sharedStorage,
     // When a photo is saved, immediately add it to the slideshow
     slideshowViewModel.actions.handleAddPhoto
   );
