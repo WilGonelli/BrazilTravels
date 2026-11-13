@@ -55,6 +55,7 @@ const createMockViewModel = (
       handleOpenPhotoUpload: vi.fn(),
       handleClosePhotoUpload: vi.fn(),
       handleSavePhoto: vi.fn().mockResolvedValue(undefined),
+      handleSavePhotos: vi.fn().mockResolvedValue(undefined),
       handleResetAll: vi.fn().mockResolvedValue(undefined),
       ...actionOverrides,
     },

@@ -97,4 +97,39 @@ describe('useSlideshowViewModel', () => {
     });
     expect(result.current.state.isPlaying).toBe(true);
   });
+
+  it('adds multiple photos and sets the latest photo active', async () => {
+    const { result } = renderHook(() => useSlideshowViewModel(mockStorage));
+    await act(async () => {});
+
+    expect(result.current.state.photos).toHaveLength(2);
+    expect(result.current.state.intervalMs).toBe(15000);
+
+    const newPhotos: TravelPhoto[] = [
+      {
+        id: 'new-1',
+        destinationId: 'sp-ubatuba-felix',
+        destinationName: 'Praia do Félix',
+        stateCode: 'SP',
+        imageUrl: 'data:image/jpeg;base64,sample1',
+        createdAt: '2026-11-13',
+      },
+      {
+        id: 'new-2',
+        destinationId: 'sp-ubatuba-felix',
+        destinationName: 'Praia do Félix',
+        stateCode: 'SP',
+        imageUrl: 'data:image/jpeg;base64,sample2',
+        createdAt: '2026-11-13',
+      },
+    ];
+
+    act(() => {
+      result.current.actions.handleAddPhotos(newPhotos);
+    });
+
+    expect(result.current.state.photos).toHaveLength(4);
+    expect(result.current.state.activeIndex).toBe(0);
+    expect(result.current.state.activePhoto?.id).toBe('new-1');
+  });
 });

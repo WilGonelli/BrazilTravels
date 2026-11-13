@@ -68,10 +68,17 @@ class ApiHandler(BaseHTTPRequestHandler):
             try:
                 with open(PHOTOS_FILE, "r") as f:
                     photos = json.load(f)
-                photo = body.get("photo", body)
-                photo_id = photo.get("id")
-                photos = [p for p in photos if p.get("id") != photo_id]
-                photos.insert(0, photo)
+                new_photos = body.get("photos")
+                if not new_photos:
+                    new_photos = [body.get("photo", body)]
+                elif not isinstance(new_photos, list):
+                    new_photos = [new_photos]
+
+                for p in reversed(new_photos):
+                    if isinstance(p, dict) and p.get("id"):
+                        photos = [x for x in photos if x.get("id") != p.get("id")]
+                        photos.insert(0, p)
+
                 with open(PHOTOS_FILE, "w") as f:
                     json.dump(photos, f, ensure_ascii=False)
                 self._send_json(200, {"status": "ok", "photosCount": len(photos)})

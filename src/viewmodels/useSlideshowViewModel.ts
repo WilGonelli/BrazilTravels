@@ -17,6 +17,7 @@ export interface SlideshowActions {
   readonly handleSelectIndex: (index: number) => void;
   readonly handleTogglePlayPause: () => void;
   readonly handleAddPhoto: (photo: TravelPhoto) => void;
+  readonly handleAddPhotos: (photos: TravelPhoto[]) => void;
 }
 
 export interface SlideshowViewModelContract {
@@ -31,7 +32,7 @@ const defaultStorage: StorageService = new LocalStorageService();
  */
 export function useSlideshowViewModel(
   storage: StorageService = defaultStorage,
-  intervalMs: number = 6000
+  intervalMs: number = 15000
 ): SlideshowViewModelContract {
   const [photos, setPhotos] = useState<TravelPhoto[]>([]);
   const [activeIndex, setActiveIndex] = useState<number>(0);
@@ -120,6 +121,12 @@ export function useSlideshowViewModel(
     setActiveIndex(0);
   }, []);
 
+  const handleAddPhotos = useCallback((newPhotos: TravelPhoto[]) => {
+    if (newPhotos.length === 0) return;
+    setPhotos((prev) => [...newPhotos, ...prev]);
+    setActiveIndex(0);
+  }, []);
+
   const activePhoto = photos[activeIndex] || null;
 
   return {
@@ -136,6 +143,7 @@ export function useSlideshowViewModel(
       handleSelectIndex,
       handleTogglePlayPause,
       handleAddPhoto,
+      handleAddPhotos,
     },
   };
 }

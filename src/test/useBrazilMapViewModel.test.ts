@@ -8,6 +8,10 @@ class MockStorageService implements StorageService {
   private unlocked = new Set<string>();
   private photos: TravelPhoto[] = [];
 
+  get savedPhotos(): TravelPhoto[] {
+    return this.photos;
+  }
+
   async getUnlockedDestinationIds(): Promise<Set<string>> {
     return new Set(this.unlocked);
   }
@@ -127,5 +131,23 @@ describe('useBrazilMapViewModel', () => {
     });
     expect(result.current.state.isUnlockModalOpen).toBe(false);
     expect(result.current.state.destinations['ce-jericoacoara'].isUnlocked).toBe(false);
+  });
+
+  it('saves multiple photos simultaneously and associates them with the destination', async () => {
+    const { result } = renderHook(() => useBrazilMapViewModel(mockStorage));
+    await act(async () => {});
+
+    await act(async () => {
+      await result.current.actions.handleSavePhotos(
+        'ce-jericoacoara',
+        ['data:image/jpeg;base64,photo1', 'data:image/jpeg;base64,photo2'],
+        'Férias no Ceará'
+      );
+    });
+
+    const jeri = result.current.state.destinations['ce-jericoacoara'];
+    expect(jeri.photoUrls).toHaveLength(2);
+    expect(mockStorage.savedPhotos).toHaveLength(2);
+    expect(mockStorage.savedPhotos[0].destinationName).toContain('Jericoacoara');
   });
 });

@@ -27,6 +27,7 @@ export interface BrazilMapActions {
   readonly handleOpenPhotoUpload: (destination: Destination) => void;
   readonly handleClosePhotoUpload: () => void;
   readonly handleSavePhoto: (destinationId: string, photoDataUrl: string, caption?: string) => Promise<void>;
+  readonly handleSavePhotos: (destinationId: string, photoDataUrls: string[], caption?: string) => Promise<void>;
   readonly handleResetAll: () => Promise<void>;
 }
 
@@ -42,7 +43,8 @@ const defaultStorage: StorageService = createDefaultStorageService();
  */
 export function useBrazilMapViewModel(
   storage: StorageService = defaultStorage,
-  onPhotoSaved?: (photo: TravelPhoto) => void
+  onPhotoSaved?: (photo: TravelPhoto) => void,
+  onPhotosSaved?: (photos: TravelPhoto[]) => void
 ): BrazilMapViewModelContract {
   const [destinations, setDestinations] = useState<Record<string, Destination>>(() => createInitialDestinations());
   const [selectedStateCode, setSelectedStateCode] = useState<BrazilStateCode | null>(null);
@@ -149,20 +151,20 @@ export function useBrazilMapViewModel(
     setTargetPhotoDestination(null);
   }, []);
 
-  const handleSavePhoto = useCallback(
-    async (destinationId: string, photoDataUrl: string, caption?: string) => {
+  const handleSavePhotos = useCallback(
+    async (destinationId: string, photoDataUrls: string[], caption?: string) => {
       const dest = destinations[destinationId];
-      if (!dest) return;
+      if (!dest || photoDataUrls.length === 0) return;
 
-      const newPhoto: TravelPhoto = {
-        id: `photo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      const newPhotos: TravelPhoto[] = photoDataUrls.map((url, index) => ({
+        id: `photo-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`,
         destinationId,
         destinationName: dest.name,
         stateCode: dest.stateCode,
-        imageUrl: photoDataUrl,
+        imageUrl: url,
         caption,
         createdAt: new Date().toISOString(),
-      };
+      }));
 
       // Update destination photo references
       setDestinations((prev) => {
@@ -172,18 +174,31 @@ export function useBrazilMapViewModel(
           ...prev,
           [destinationId]: {
             ...current,
-            photoUrls: [photoDataUrl, ...current.photoUrls],
+            photoUrls: [...photoDataUrls, ...current.photoUrls],
           },
         };
       });
 
-      await storage.saveTravelPhoto(newPhoto);
-      if (onPhotoSaved) {
-        onPhotoSaved(newPhoto);
+      for (const photo of newPhotos) {
+        await storage.saveTravelPhoto(photo);
       }
+
+      if (onPhotosSaved) {
+        onPhotosSaved(newPhotos);
+      } else if (onPhotoSaved) {
+        newPhotos.forEach((p) => onPhotoSaved(p));
+      }
+
       setTargetPhotoDestination(null);
     },
-    [destinations, storage, onPhotoSaved]
+    [destinations, storage, onPhotoSaved, onPhotosSaved]
+  );
+
+  const handleSavePhoto = useCallback(
+    async (destinationId: string, photoDataUrl: string, caption?: string) => {
+      await handleSavePhotos(destinationId, [photoDataUrl], caption);
+    },
+    [handleSavePhotos]
   );
 
   const handleResetAll = useCallback(async () => {
@@ -214,6 +229,7 @@ export function useBrazilMapViewModel(
       handleOpenPhotoUpload,
       handleClosePhotoUpload,
       handleSavePhoto,
+      handleSavePhotos,
       handleResetAll,
     },
   };

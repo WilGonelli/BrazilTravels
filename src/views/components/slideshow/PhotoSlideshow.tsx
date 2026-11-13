@@ -41,27 +41,6 @@ export const PhotoSlideshow: React.FC<PhotoSlideshowProps> = ({ viewModel }) => 
                   className={styles.heroImage}
                 />
                 <span className={styles.heroBadge}>★ DESTINO DESBLOQUEADO</span>
-
-                {photos.length > 1 && (
-                  <>
-                    <button
-                      type="button"
-                      className={`${styles.navButton} ${styles.prevButton}`}
-                      onClick={actions.handlePrevious}
-                      aria-label="Foto anterior"
-                    >
-                      ‹
-                    </button>
-                    <button
-                      type="button"
-                      className={`${styles.navButton} ${styles.nextButton}`}
-                      onClick={actions.handleNext}
-                      aria-label="Próxima foto"
-                    >
-                      ›
-                    </button>
-                  </>
-                )}
               </div>
 
               <div className={styles.metaSection}>

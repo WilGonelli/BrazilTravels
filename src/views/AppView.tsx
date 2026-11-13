@@ -16,12 +16,13 @@ import { PhotoUploadModal } from './components/modal/PhotoUploadModal';
 export const AppView: React.FC = () => {
   const sharedStorage = useMemo(() => createDefaultStorageService(), []);
 
-  const slideshowViewModel = useSlideshowViewModel(sharedStorage, 7000);
+  // 15-second automatic slideshow transition per user specification
+  const slideshowViewModel = useSlideshowViewModel(sharedStorage, 15000);
 
   const mapViewModel = useBrazilMapViewModel(
     sharedStorage,
-    // When a photo is saved, immediately add it to the slideshow
-    slideshowViewModel.actions.handleAddPhoto
+    slideshowViewModel.actions.handleAddPhoto,
+    slideshowViewModel.actions.handleAddPhotos
   );
 
   const { state, actions } = mapViewModel;
@@ -112,7 +113,7 @@ export const AppView: React.FC = () => {
       <PhotoUploadModal
         isOpen={isPhotoModalOpen}
         destination={targetPhotoDestination}
-        onSave={actions.handleSavePhoto}
+        onSave={actions.handleSavePhotos}
         onClose={actions.handleClosePhotoUpload}
       />
     </main>
