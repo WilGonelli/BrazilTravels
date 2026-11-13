@@ -1,0 +1,183 @@
+.appLayout {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Map Section Container */
+.mapPosterContainer {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.mapHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+}
+
+.posterTitleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.mainTitle {
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
+  word-break: break-word;
+  line-height: 1.25;
+}
+
+.subTitle {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.clearFilterBtn {
+  background-color: var(--bg-hover);
+  border: 1px solid #38bdf8;
+  color: var(--accent-cyan);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.clearFilterBtn:hover {
+  background-color: rgba(56, 189, 248, 0.15);
+}
+
+.progressBadge {
+  background-color: var(--bg-surface);
+  border: 1px solid #334155;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+/* 3-Column Poster Layout */
+.posterGrid {
+  display: grid;
+  grid-template-columns: minmax(260px, 300px) 1fr minmax(260px, 320px);
+  gap: 20px;
+  align-items: start;
+  width: 100%;
+}
+
+.leftColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.centerColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 450px;
+  width: 100%;
+  min-width: 0;
+}
+
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.footerNote {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 12px;
+  line-height: 1.4;
+}
+
+/* Tablet & Mobile Responsiveness */
+@media (max-width: 1024px) {
+  .posterGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .centerColumn {
+    order: -1; /* Display map first on smaller screens */
+    min-height: auto;
+    padding: 10px 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .appLayout {
+    padding: 12px 10px;
+    gap: 14px;
+  }
+
+  .mapPosterContainer {
+    padding: 14px 12px;
+    border-radius: 14px;
+    gap: 14px;
+  }
+
+  .mapHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .headerActions {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .mainTitle {
+    font-size: 1.25rem;
+  }
+
+  .subTitle {
+    font-size: 0.78rem;
+  }
+
+  .clearFilterBtn,
+  .progressBadge {
+    font-size: 0.75rem;
+    padding: 6px 10px;
+  }
+}

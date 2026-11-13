@@ -1,0 +1,134 @@
+.sidebarCard {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.categoryTitle {
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--accent-cyan);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.countTag {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.itemList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 460px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+/* Custom scrollbar for clean aesthetics */
+.itemList::-webkit-scrollbar {
+  width: 5px;
+}
+
+.itemList::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.itemList::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+
+.itemList::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-cyan);
+}
+
+.itemCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+  font-weight: 600;
+  gap: 10px;
+}
+
+/* Locked Scratch-off appearance */
+.itemLocked {
+  background: linear-gradient(135deg, #b0b5be 0%, #828994 100%);
+  color: #111827;
+  cursor: pointer;
+}
+
+.itemLocked:hover {
+  filter: brightness(1.1);
+  transform: translateX(2px);
+}
+
+/* Unlocked appearance */
+.itemUnlocked {
+  color: #ffffff;
+}
+
+.itemContent {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.statusIcon {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.itemName {
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
+  line-height: 1.35;
+}
+
+/* Dedicated + SVG button */
+.addPhotoBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background-color: rgba(0, 0, 0, 0.4);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  transition: transform 0.2s, background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.addPhotoBtn:hover {
+  background-color: var(--accent-cyan);
+  color: #0f172a;
+  transform: scale(1.1);
+}
+
+.emptyNotice {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 8px 4px;
+  text-align: center;
+}
