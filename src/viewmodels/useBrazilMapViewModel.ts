@@ -5,15 +5,6 @@ import { StorageService } from '../services/StorageService';
 import { createDefaultStorageService } from '../services/StorageFactory';
 import { TravelPhoto } from '../models/TravelPhoto';
 import { Achievement, calculateAchievements } from '../models/Achievement';
-import { BRAZIL_GEO_PATHS } from '../models/brazilGeoPaths';
-
-export interface RoutePoint {
-  readonly id: string;
-  readonly name: string;
-  readonly stateCode: string;
-  readonly x: number;
-  readonly y: number;
-}
 
 export interface BrazilMapState {
   readonly destinations: Record<string, Destination>;
@@ -32,8 +23,7 @@ export interface BrazilMapState {
   readonly isPhotoModalOpen: boolean;
   readonly targetPhotoDestination: Destination | null;
   readonly isLoading: boolean;
-  readonly isRouteLineVisible: boolean;
-  readonly travelRoutePoints: readonly RoutePoint[];
+  readonly raffleNotification: string | null;
   readonly achievements: readonly Achievement[];
   readonly unlockedAchievementsCount: number;
   readonly totalAchievementsCount: number;
@@ -63,7 +53,8 @@ export interface BrazilMapActions {
   readonly handleSearchChange: (query: string) => void;
   readonly handleClearSearch: () => void;
   readonly handleSelectSearchResult: (destination: Destination) => void;
-  readonly handleToggleRouteLine: () => void;
+  readonly handlePickRandomDestination: () => Destination | null;
+  readonly handleDismissRaffleNotification: () => void;
   readonly handleOpenAchievements: () => void;
   readonly handleCloseAchievements: () => void;
   readonly handleOpenRemoteModal: () => void;
@@ -89,7 +80,7 @@ function normalizeSearchText(text: string): string {
 }
 
 /**
- * Custom ViewModel hook orchestrating map state, dynamic sidebars, routes, achievements, and cascading unlock rules.
+ * Custom ViewModel hook orchestrating map state, dynamic sidebars, destination raffles, achievements, and cascading unlock rules.
  */
 export function useBrazilMapViewModel(
   storage: StorageService = defaultStorage,
@@ -104,7 +95,7 @@ export function useBrazilMapViewModel(
   const [targetPhotoDestination, setTargetPhotoDestination] = useState<Destination | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
-  const [isRouteLineVisible, setIsRouteLineVisible] = useState<boolean>(true);
+  const [raffleNotification, setRaffleNotification] = useState<string | null>(null);
   const [isAchievementsModalOpen, setIsAchievementsModalOpen] = useState<boolean>(false);
   const [isRemoteModalOpen, setIsRemoteModalOpen] = useState<boolean>(false);
   const [loadedPhotos, setLoadedPhotos] = useState<TravelPhoto[]>([]);
@@ -195,50 +186,6 @@ export function useBrazilMapViewModel(
       .slice(0, 8);
   }, [destinations, searchQuery]);
 
-  // Derived state: Ordered travel route points for SVG flight/road connection path
-  const travelRoutePoints = useMemo<readonly RoutePoint[]>(() => {
-    const unlockedList = Object.values(destinations).filter((d) => d.isUnlocked);
-    // Sort deterministically: items with photos first, then by name
-    const sorted = [...unlockedList].sort((a, b) => {
-      if (a.photoUrls.length > 0 && b.photoUrls.length === 0) return -1;
-      if (b.photoUrls.length > 0 && a.photoUrls.length === 0) return 1;
-      return a.name.localeCompare(b.name);
-    });
-
-    const points: RoutePoint[] = [];
-    const usedPositions = new Set<string>();
-
-    for (const d of sorted) {
-      const geo = BRAZIL_GEO_PATHS[d.stateCode];
-      if (!geo) continue;
-
-      let { x, y } = geo.center;
-
-      // Deterministic slight offset for point destinations to avoid exact overlap with state center
-      if (d.category !== 'State') {
-        const hash = d.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        const offsetX = ((hash % 15) - 7) * 1.8;
-        const offsetY = (((hash >> 2) % 15) - 7) * 1.8;
-        x = Number((x + offsetX).toFixed(1));
-        y = Number((y + offsetY).toFixed(1));
-      }
-
-      const posKey = `${x},${y}`;
-      if (!usedPositions.has(posKey)) {
-        usedPositions.add(posKey);
-        points.push({
-          id: d.id,
-          name: d.name,
-          stateCode: d.stateCode,
-          x,
-          y,
-        });
-      }
-    }
-
-    return points;
-  }, [destinations]);
-
   // Derived state: Calculated traveler achievements
   const achievements = useMemo(() => {
     return calculateAchievements(destinations, loadedPhotos);
@@ -253,6 +200,7 @@ export function useBrazilMapViewModel(
   // Actions
   const handleSelectState = useCallback((stateCode: BrazilStateCode | null) => {
     setSelectedStateCode((prev) => (prev === stateCode ? null : stateCode));
+    setRaffleNotification(null);
   }, []);
 
   const handleSearchChange = useCallback((query: string) => {
@@ -263,56 +211,124 @@ export function useBrazilMapViewModel(
     setSearchQuery('');
   }, []);
 
-  const handleRequestUnlock = useCallback((destination: Destination) => {
-    setPendingDestination(destination);
-  }, []);
-
-  const handleSelectSearchResult = useCallback((destination: Destination) => {
-    setSearchQuery('');
-    setSelectedStateCode(destination.stateCode);
-
-    if (!destination.isUnlocked) {
+  const handleSelectSearchResult = useCallback(
+    (destination: Destination) => {
+      setSelectedStateCode(destination.stateCode);
       setPendingDestination(destination);
-    }
-  }, []);
+      setSearchQuery('');
+      setRaffleNotification(null);
+    },
+    []
+  );
 
-  const handleConfirmUnlock = useCallback(async () => {
-    if (!pendingDestination) return;
-
-    const target = pendingDestination;
-    const isTargetState = target.category === 'State';
-    const stateId = `state-${target.stateCode}`;
-
-    const idsToUnlock = [target.id];
-    if (!isTargetState) {
-      idsToUnlock.push(stateId);
-    }
-
-    setDestinations((prev) => {
-      const next = { ...prev };
-      for (const id of idsToUnlock) {
-        if (next[id]) {
-          next[id] = { ...next[id], isUnlocked: true };
-        }
+  /**
+   * Randomly raffles an unvisited destination.
+   * If a state is selected, raffles an unvisited destination from that state.
+   * If no state is selected, raffles an unvisited destination from anywhere in Brazil.
+   * Strictly excludes all already visited (unlocked) destinations.
+   */
+  const handlePickRandomDestination = useCallback((): Destination | null => {
+    const all = Object.values(destinations);
+    const candidates = all.filter((d) => {
+      if (d.category === 'State') return false;
+      if (d.isUnlocked) return false;
+      if (selectedStateCode !== null) {
+        return d.stateCode === selectedStateCode;
       }
-      return next;
+      return true;
     });
 
-    setPendingDestination(null);
-
-    try {
-      await storage.saveUnlockedDestinationIds(idsToUnlock);
-    } catch (err) {
-      console.error('Failed to persist unlock state:', err);
+    if (candidates.length === 0) {
+      if (selectedStateCode !== null) {
+        setRaffleNotification(
+          `Todos os destinos de ${selectedStateCode} já foram visitados! Selecione outro estado ou desmarque o filtro para sortear pelo Brasil todo.`
+        );
+      } else {
+        setRaffleNotification(
+          'Parabéns! Todos os destinos turísticos cadastrados no Brasil já foram visitados!'
+        );
+      }
+      return null;
     }
-  }, [pendingDestination, storage]);
+
+    const randomChoice = candidates[Math.floor(Math.random() * candidates.length)];
+    setRaffleNotification(null);
+
+    // If no state was selected, select the state of the drawn destination so the user sees it in context
+    if (selectedStateCode === null) {
+      setSelectedStateCode(randomChoice.stateCode);
+    }
+
+    // Open unlock confirmation modal for the chosen destination
+    setPendingDestination(randomChoice);
+    return randomChoice;
+  }, [destinations, selectedStateCode]);
+
+  const handleDismissRaffleNotification = useCallback(() => {
+    setRaffleNotification(null);
+  }, []);
+
+  const handleRequestUnlock = useCallback((destination: Destination) => {
+    setPendingDestination(destination);
+    setRaffleNotification(null);
+  }, []);
 
   const handleCancelUnlock = useCallback(() => {
     setPendingDestination(null);
   }, []);
 
+  /**
+   * Confirms unlocking of pending destination. Cascades to state root automatically if not unlocked.
+   */
+  const handleConfirmUnlock = useCallback(async () => {
+    if (!pendingDestination) return;
+
+    const target = pendingDestination;
+    const nowIso = new Date().toISOString();
+    const idsToSave: string[] = [target.id];
+
+    setDestinations((prev) => {
+      const next = { ...prev };
+
+      // Unlock targeted item
+      next[target.id] = {
+        ...target,
+        isUnlocked: true,
+        unlockedAt: nowIso,
+      };
+
+      // Cascade unlock: If unlocking a point destination (Beach, Waterfall, etc.),
+      // automatically unlock its corresponding federative unit root state if still locked
+      if (target.category !== 'State') {
+        const stateRootId = `state-${target.stateCode}`;
+        const parentState = next[stateRootId];
+        if (parentState && !parentState.isUnlocked) {
+          next[stateRootId] = {
+            ...parentState,
+            isUnlocked: true,
+            unlockedAt: nowIso,
+          };
+          idsToSave.push(stateRootId);
+        }
+      }
+
+      return next;
+    });
+
+    setPendingDestination(null);
+
+    // Asynchronously synchronize with persistent storage layer
+    try {
+      await storage.saveUnlockedDestinationIds(idsToSave);
+    } catch (err) {
+      console.error('Failed to persist unlocked destinations:', err);
+    }
+  }, [pendingDestination, storage]);
+
   const handleOpenPhotoUpload = useCallback((destination: Destination) => {
     setTargetPhotoDestination(destination);
+    setPendingDestination(null);
+    setRaffleNotification(null);
   }, []);
 
   const handleClosePhotoUpload = useCallback(() => {
@@ -326,43 +342,53 @@ export function useBrazilMapViewModel(
       caption?: string,
       travelDate?: string
     ) => {
-      const dest = destinations[destinationId];
-      if (!dest || photoDataUrls.length === 0) return;
+      if (photoDataUrls.length === 0) return;
 
-      const newPhotos: TravelPhoto[] = photoDataUrls.map((url, index) => ({
-        id: `photo-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`,
-        destinationId,
-        destinationName: dest.name,
-        stateCode: dest.stateCode,
-        imageUrl: url,
-        caption,
-        travelDate,
-        createdAt: new Date().toISOString(),
-      }));
+      const createdPhotos: TravelPhoto[] = [];
 
-      // Update destination photo references
+      for (const photoUrl of photoDataUrls) {
+        const targetDest = destinations[destinationId];
+        const newPhoto: TravelPhoto = {
+          id: `photo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          destinationId,
+          destinationName: targetDest?.name || destinationId,
+          stateCode: targetDest?.stateCode || '',
+          imageUrl: photoUrl,
+          caption: caption?.trim() || undefined,
+          travelDate: travelDate || undefined,
+          createdAt: new Date().toISOString(),
+        };
+
+        try {
+          await storage.saveTravelPhoto(newPhoto);
+          createdPhotos.push(newPhoto);
+        } catch (err) {
+          console.error('Failed to save travel photo:', err);
+        }
+      }
+
       setDestinations((prev) => {
-        const current = prev[destinationId];
-        if (!current) return prev;
+        const target = prev[destinationId];
+        if (!target) return prev;
+        const currentUrls = target.photoUrls;
+        const newUrls = createdPhotos.map((p) => p.imageUrl);
         return {
           ...prev,
           [destinationId]: {
-            ...current,
-            photoUrls: [...photoDataUrls, ...current.photoUrls],
+            ...target,
+            photoUrls: [...currentUrls, ...newUrls],
           },
         };
       });
 
-      setLoadedPhotos((prev) => [...newPhotos, ...prev]);
+      setLoadedPhotos((prev) => [...prev, ...createdPhotos]);
 
-      for (const photo of newPhotos) {
-        await storage.saveTravelPhoto(photo);
-      }
-
-      if (onPhotosSaved) {
-        onPhotosSaved(newPhotos);
-      } else if (onPhotoSaved) {
-        newPhotos.forEach((p) => onPhotoSaved(p));
+      if (createdPhotos.length > 0) {
+        if (onPhotosSaved) {
+          onPhotosSaved(createdPhotos);
+        } else if (onPhotoSaved) {
+          createdPhotos.forEach((p) => onPhotoSaved(p));
+        }
       }
 
       setTargetPhotoDestination(null);
@@ -381,10 +407,6 @@ export function useBrazilMapViewModel(
     },
     [handleSavePhotos]
   );
-
-  const handleToggleRouteLine = useCallback(() => {
-    setIsRouteLineVisible((prev) => !prev);
-  }, []);
 
   const handleOpenAchievements = useCallback(() => {
     setIsAchievementsModalOpen(true);
@@ -407,6 +429,7 @@ export function useBrazilMapViewModel(
     setDestinations(createInitialDestinations());
     setLoadedPhotos([]);
     setSelectedStateCode(null);
+    setRaffleNotification(null);
   }, [storage]);
 
   return {
@@ -427,8 +450,7 @@ export function useBrazilMapViewModel(
       isPhotoModalOpen: targetPhotoDestination !== null,
       targetPhotoDestination,
       isLoading,
-      isRouteLineVisible,
-      travelRoutePoints,
+      raffleNotification,
       achievements,
       unlockedAchievementsCount,
       totalAchievementsCount,
@@ -447,7 +469,8 @@ export function useBrazilMapViewModel(
       handleSearchChange,
       handleClearSearch,
       handleSelectSearchResult,
-      handleToggleRouteLine,
+      handlePickRandomDestination,
+      handleDismissRaffleNotification,
       handleOpenAchievements,
       handleCloseAchievements,
       handleOpenRemoteModal,

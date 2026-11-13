@@ -206,16 +206,9 @@ describe('useBrazilMapViewModel', () => {
     expect(result.current.state.searchResults).toHaveLength(0);
   });
 
-  it('manages route visibility, travel route points, and achievements modal', async () => {
+  it('manages achievements modal and remote modal states', async () => {
     const { result } = renderHook(() => useBrazilMapViewModel(mockStorage));
     await act(async () => {});
-
-    // Route line visibility toggle
-    expect(result.current.state.isRouteLineVisible).toBe(true);
-    act(() => {
-      result.current.actions.handleToggleRouteLine();
-    });
-    expect(result.current.state.isRouteLineVisible).toBe(false);
 
     // Achievements modal open/close
     expect(result.current.state.isAchievementsModalOpen).toBe(false);
@@ -238,5 +231,80 @@ describe('useBrazilMapViewModel', () => {
       result.current.actions.handleCloseRemoteModal();
     });
     expect(result.current.state.isRemoteModalOpen).toBe(false);
+  });
+
+  it('raffles destination across all Brazil when no state is selected, excluding visited ones', async () => {
+    const { result } = renderHook(() => useBrazilMapViewModel(mockStorage));
+    await act(async () => {});
+
+    expect(result.current.state.selectedStateCode).toBeNull();
+    expect(result.current.state.pendingDestination).toBeNull();
+
+    let drawnDestination: any = null;
+    act(() => {
+      drawnDestination = result.current.actions.handlePickRandomDestination();
+    });
+
+    expect(drawnDestination).not.toBeNull();
+    expect(drawnDestination.isUnlocked).toBe(false);
+    expect(drawnDestination.category).not.toBe('State');
+    // Contextually selects the state of the drawn destination and opens unlock dialog
+    expect(result.current.state.selectedStateCode).toBe(drawnDestination.stateCode);
+    expect(result.current.state.pendingDestination).toEqual(drawnDestination);
+    expect(result.current.state.isUnlockModalOpen).toBe(true);
+  });
+
+  it('raffles destination specifically from selected state, excluding visited ones', async () => {
+    const { result } = renderHook(() => useBrazilMapViewModel(mockStorage));
+    await act(async () => {});
+
+    // Select Acre ('AC')
+    act(() => {
+      result.current.actions.handleSelectState('AC');
+    });
+
+    let drawnDestination: any = null;
+    act(() => {
+      drawnDestination = result.current.actions.handlePickRandomDestination();
+    });
+
+    expect(drawnDestination).not.toBeNull();
+    expect(drawnDestination.stateCode).toBe('AC');
+    expect(drawnDestination.isUnlocked).toBe(false);
+    expect(result.current.state.pendingDestination).toEqual(drawnDestination);
+
+    // Unlock this destination
+    await act(async () => {
+      await result.current.actions.handleConfirmUnlock();
+    });
+
+    // Check if raffle now picks remaining unvisited in AC or notifies when exhausted
+    const allAc = Object.values(result.current.state.destinations).filter(
+      (d) => d.stateCode === 'AC' && d.category !== 'State'
+    );
+    // Unlock remaining in AC
+    for (const d of allAc) {
+      act(() => {
+        result.current.actions.handleRequestUnlock(d);
+      });
+      await act(async () => {
+        await result.current.actions.handleConfirmUnlock();
+      });
+    }
+
+    // Now all in AC are visited; raffling in AC should notify and return null
+    let exhaustedDrawn: any = null;
+    act(() => {
+      exhaustedDrawn = result.current.actions.handlePickRandomDestination();
+    });
+
+    expect(exhaustedDrawn).toBeNull();
+    expect(result.current.state.raffleNotification).toContain('Todos os destinos de AC já foram visitados');
+
+    // Dismiss notification
+    act(() => {
+      result.current.actions.handleDismissRaffleNotification();
+    });
+    expect(result.current.state.raffleNotification).toBeNull();
   });
 });

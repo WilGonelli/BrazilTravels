@@ -30,7 +30,6 @@ export const AppView: React.FC = () => {
 
   const { state, actions } = mapViewModel;
   const {
-    destinations,
     selectedStateCode,
     unlockedStatesCount,
     totalStatesCount,
@@ -42,24 +41,13 @@ export const AppView: React.FC = () => {
     pendingDestination,
     isPhotoModalOpen,
     targetPhotoDestination,
-    isRouteLineVisible,
+    raffleNotification,
     achievements,
     unlockedAchievementsCount,
     totalAchievementsCount,
     isAchievementsModalOpen,
     isRemoteModalOpen,
   } = state;
-
-  const handlePickRandomDestination = () => {
-    const lockedPoints = Object.values(destinations).filter(
-      (d) => !d.isUnlocked && d.category !== 'State'
-    );
-    if (lockedPoints.length > 0) {
-      const randomChoice = lockedPoints[Math.floor(Math.random() * lockedPoints.length)];
-      actions.handleSelectState(randomChoice.stateCode);
-      actions.handleRequestUnlock(randomChoice);
-    }
-  };
 
   return (
     <main className={styles.appLayout}>
@@ -120,24 +108,20 @@ export const AppView: React.FC = () => {
 
                 <button
                   type="button"
-                  className={`${styles.toolbarBtn} ${isRouteLineVisible ? styles.toolbarBtnActive : ''}`}
-                  onClick={actions.handleToggleRouteLine}
+                  className={styles.toolbarBtn}
+                  onClick={actions.handlePickRandomDestination}
                   aria-label={
-                    isRouteLineVisible
-                      ? 'Ocultar rotas de voo no mapa'
-                      : 'Exibir rotas de voo no mapa'
+                    selectedStateCode
+                      ? `Sortear próximo destino não visitado em ${selectedStateCode}`
+                      : 'Sortear próximo destino não visitado no Brasil'
                   }
-                  title="Alternar rotas de viagem no mapa"
+                  title={
+                    selectedStateCode
+                      ? `Sortear destino não visitado em ${selectedStateCode}`
+                      : 'Sortear destino não visitado no Brasil'
+                  }
                 >
-                  <span
-                    className={
-                      isRouteLineVisible
-                        ? styles.toolbarBtnDotActive
-                        : styles.toolbarBtnDotInactive
-                    }
-                    aria-hidden="true"
-                  />
-                  ✈️ Rotas
+                  🎲 Sortear {selectedStateCode ? `(${selectedStateCode})` : 'Destino'}
                 </button>
 
                 <button
@@ -148,16 +132,6 @@ export const AppView: React.FC = () => {
                   title="Controle Remoto / Acesso Celular"
                 >
                   📱 Celular
-                </button>
-
-                <button
-                  type="button"
-                  className={styles.toolbarBtn}
-                  onClick={handlePickRandomDestination}
-                  aria-label="Sortear próximo destino para viajar"
-                  title="Sortear próximo destino"
-                >
-                  🎲 Sortear
                 </button>
               </div>
 
@@ -173,6 +147,23 @@ export const AppView: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* Raffle Notification Feedback Banner */}
+            {raffleNotification && (
+              <div className={styles.raffleAlertBanner} role="alert" aria-live="polite">
+                <span className={styles.raffleAlertText}>
+                  🔔 {raffleNotification}
+                </span>
+                <button
+                  type="button"
+                  className={styles.raffleAlertDismiss}
+                  onClick={actions.handleDismissRaffleNotification}
+                  aria-label="Fechar aviso de sorteio"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
 
             {/* Visual Gradient Progress Bar */}
             <div
@@ -273,9 +264,7 @@ export const AppView: React.FC = () => {
         onPrevPhoto={slideshowViewModel.actions.handlePrevious}
         onTogglePlayPause={slideshowViewModel.actions.handleTogglePlayPause}
         isPlaying={slideshowViewModel.state.isPlaying}
-        onToggleRouteLine={actions.handleToggleRouteLine}
-        isRouteLineVisible={isRouteLineVisible}
-        onPickRandomDestination={handlePickRandomDestination}
+        onPickRandomDestination={actions.handlePickRandomDestination}
       />
     </main>
   );

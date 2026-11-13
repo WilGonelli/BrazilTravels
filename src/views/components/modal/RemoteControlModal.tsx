@@ -8,8 +8,6 @@ interface RemoteControlModalProps {
   readonly onPrevPhoto: () => void;
   readonly onTogglePlayPause: () => void;
   readonly isPlaying: boolean;
-  readonly onToggleRouteLine: () => void;
-  readonly isRouteLineVisible: boolean;
   readonly onPickRandomDestination: () => void;
 }
 
@@ -37,8 +35,6 @@ export const RemoteControlModal: React.FC<RemoteControlModalProps> = ({
   onPrevPhoto,
   onTogglePlayPause,
   isPlaying,
-  onToggleRouteLine,
-  isRouteLineVisible,
   onPickRandomDestination,
 }) => {
   const [deviceUrl, setDeviceUrl] = useState<string>('');
@@ -152,24 +148,6 @@ export const RemoteControlModal: React.FC<RemoteControlModalProps> = ({
                   ⏭️
                 </span>
                 <span className={styles.btnLabel}>Próxima Foto</span>
-              </button>
-
-              <button
-                type="button"
-                className={styles.remoteBtn}
-                onClick={onToggleRouteLine}
-                aria-label={
-                  isRouteLineVisible
-                    ? 'Ocultar linhas de viagem no mapa'
-                    : 'Exibir linhas de viagem no mapa'
-                }
-              >
-                <span className={styles.btnIcon} aria-hidden="true">
-                  ✈️
-                </span>
-                <span className={styles.btnLabel}>
-                  {isRouteLineVisible ? 'Rotas Ativas' : 'Rotas Ocultas'}
-                </span>
               </button>
 
               <button
